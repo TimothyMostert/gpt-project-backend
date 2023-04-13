@@ -18,6 +18,7 @@ class OpenAIController extends Controller
         $result = OpenAI::completions()->create([
             'model' => 'text-davinci-003',
             'prompt' => $request->prompt,
+            'max_tokens' => 2000,
         ]);
         
         return response()->json($result);
