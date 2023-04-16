@@ -11,6 +11,7 @@
         "laravel/sanctum": "^3.2",
         "laravel/telescope": "^4.14",
         "laravel/tinker": "^2.8",
+        "laravel/ui": "^4.2",
         "openai-php/laravel": "^0.4.1",
         "timwassenburg/laravel-pivot-table-generator": "^1.0"
     },
