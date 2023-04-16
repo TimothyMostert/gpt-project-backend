@@ -112,10 +112,11 @@ class ItineraryController extends Controller
                     $currentEvent->location()->associate($location);
                     // create and attach activities to event
                     foreach ($event->activities as $activity) {
+                        $activityType = $activityTypes->where('name', $activity->activityType)->first();
                         $nextActivity = Activity::create([
                             'title' => $activity->title,
                             'description' => $activity->description,
-                            'activity_type_id' => $activityTypes->where('name', $activity->activityType)->first()->id,
+                            'activity_type_id' => $activityType ? $activityType->id : 17,
                         ]);
                         $currentEvent->activities()->save($nextActivity);
                     }

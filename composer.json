@@ -9,6 +9,7 @@
         "guzzlehttp/guzzle": "^7.2",
         "laravel/framework": "^10.0",
         "laravel/sanctum": "^3.2",
+        "laravel/telescope": "^4.14",
         "laravel/tinker": "^2.8",
         "openai-php/laravel": "^0.4.1",
         "timwassenburg/laravel-pivot-table-generator": "^1.0"
