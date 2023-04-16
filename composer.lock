@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "58a6af60199b96df41353f8c39c5c67c",
+    "content-hash": "f75812591ca4780b85c0923df37a8374",
     "packages": [
         {
             "name": "brick/math",
@@ -5556,6 +5556,59 @@
                 "source": "https://github.com/tijsverkoyen/CssToInlineStyles/tree/2.2.6"
             },
             "time": "2023-01-03T09:29:04+00:00"
+        },
+        {
+            "name": "timwassenburg/laravel-pivot-table-generator",
+            "version": "v1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/timwassenburg/laravel-pivot-table-generator.git",
+                "reference": "77aa012456676de0403716ff41ce353d245f69da"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/timwassenburg/laravel-pivot-table-generator/zipball/77aa012456676de0403716ff41ce353d245f69da",
+                "reference": "77aa012456676de0403716ff41ce353d245f69da",
+                "shasum": ""
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "TimWassenburg\\PivotTableGenerator\\PivotTableGeneratorServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "TimWassenburg\\PivotTableGenerator\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Tim Wassenburg"
+                }
+            ],
+            "description": "Quickly generate pivot tables for your projects",
+            "homepage": "https://github.com/timwassenburg/laravel-pivot-table-generator",
+            "keywords": [
+                "artisan",
+                "cli",
+                "generator",
+                "laravel",
+                "migrations",
+                "php",
+                "pivot"
+            ],
+            "support": {
+                "issues": "https://github.com/timwassenburg/laravel-pivot-table-generator/issues",
+                "source": "https://github.com/timwassenburg/laravel-pivot-table-generator/tree/v1.0.0"
+            },
+            "time": "2021-11-14T18:53:44+00:00"
         },
         {
             "name": "vlucas/phpdotenv",
