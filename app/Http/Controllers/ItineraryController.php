@@ -77,12 +77,10 @@ class ItineraryController extends Controller
             'response' => $formattedItinerary,
         ]);
 
-        error_log(json_encode($formattedItinerary));
-
         $itinerary = Itinerary::create([
             'user_id' => auth()->user()->id ?? 1,
             'prompt_id' => $prompt->id,
-            'title' => $formattedItinerary->title,
+            'title' => $formattedItinerary->title ?? 'Untitled Itinerary',
         ]);
 
         $eventTypes = EventType::all();
@@ -91,10 +89,10 @@ class ItineraryController extends Controller
 
         // create events from formattedItinerary events array
         foreach ($formattedItinerary->events as $key => $event) {
-            
+            $eventType = $eventTypes->where('name', $event->type)->first();
             $itinerary->events()->create([
                 'itinerary_id' => $itinerary->id,
-                'event_type_id' => $eventTypes->where('name', $event->type)->first()->id,
+                'event_type_id' => $eventType ? $eventType->id : 'location',
                 'order' => $key,
             ]);
 
@@ -103,11 +101,11 @@ class ItineraryController extends Controller
                 case 'location':
                     $currentEvent = LocationEvent::create([
                         'event_id' => $itinerary->events->last()->id,
-                        'title' => $event->title,
-                        'description' => $event->description,
+                        'title' => $event->title ?? 'Title not specified',
+                        'description' => $event->description ?? 'Description not specified',
                     ]);
                     $location = Location::firstOrCreate([
-                        'name' => $event->location,
+                        'name' => $event->location ?? 'Location not specified',
                     ]);
                     $currentEvent->location()->associate($location);
                     // create and attach activities to event
@@ -122,15 +120,16 @@ class ItineraryController extends Controller
                     }
                     break;
                 case 'travel':
+                    $travelMode = $travelModes->where('name', $event->mode)->first();
                     $currentEvent = TravelEvent::create([
                         'event_id' => $itinerary->events->last()->id,
-                        'travel_mode_id' => $travelModes->where('name', $event->mode)->first()->id,
+                        'travel_mode_id' => $travelMode ? $travelMode->id : 8,
                     ]);
                     $originLocation = Location::firstOrCreate([
-                        'name' => $event->origin,
+                        'name' => $event->origin ?? 'Your home',
                     ]);
                     $destinationLocation = Location::firstOrCreate([
-                        'name' => $event->destination,
+                        'name' => $event->destination ?? 'Your home',
                     ]);
                     $currentEvent->origin()->associate($originLocation);
                     $currentEvent->destination()->associate($destinationLocation);
