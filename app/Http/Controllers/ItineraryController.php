@@ -30,7 +30,7 @@ class ItineraryController extends Controller
         $this->promptFormatService = new PromptFormatService();
     }
 
-    public function generateBasicItinerary(Request $request)
+    public function createBasicItinerary(Request $request)
     {
         $request->validate([
             'prompt' => 'required',
@@ -139,6 +139,16 @@ class ItineraryController extends Controller
         
         return response()->json([
             'itinerary' => $formattedItinerary,
+            'success' => true
+        ]);
+    }
+
+    public function createRandomPrompt()
+    {
+        $response = $this->openaiAPIService->createRandomPrompt();
+        $prompt = $response->choices[0]->message->content;
+        return response()->json([
+            'prompt' => $prompt,
             'success' => true
         ]);
     }
