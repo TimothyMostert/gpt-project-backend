@@ -30,7 +30,7 @@ class OpenaiAPIService
         return $result;
     }
 
-    public function createRandomPrompt($max_tokens = 150, $model = 'gpt-3.5-turbo', $temperature = 0.5)
+    public function createRandomPrompt($max_tokens = 100, $model = 'gpt-3.5-turbo', $temperature = 0.5)
     {
         $messages = [
             [
