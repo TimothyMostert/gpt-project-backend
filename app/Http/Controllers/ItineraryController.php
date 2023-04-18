@@ -136,7 +136,7 @@ class ItineraryController extends Controller
                     break;
             }
         }
-        
+
         return response()->json([
             'itinerary' => $formattedItinerary,
             'success' => true
@@ -145,10 +145,13 @@ class ItineraryController extends Controller
 
     public function createRandomPrompt()
     {
-        $response = $this->openaiAPIService->createRandomPrompt();
-        $prompt = $response->choices[0]->message->content;
+        $prompts = config('prompts.random_itinerary_concepts');
+
+        $randomPrompt = $prompts[array_rand($prompts)];
+
         return response()->json([
-            'prompt' => $prompt,
+            'prompt' => $randomPrompt['prompt'],
+            'tags' => $randomPrompt['tags'],
             'success' => true
         ]);
     }
