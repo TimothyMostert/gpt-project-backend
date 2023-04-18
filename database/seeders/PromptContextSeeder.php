@@ -68,16 +68,16 @@ class PromptContextSeeder extends Seeder
                                 }
                             ]
                         }",
-                    ],
-                    [
-                        'role' => 'assistant',
-                        'content' => "
+                ],
+                [
+                    'role' => 'assistant',
+                    'content' => "
                             Understood, Please provide the prompt and tags.
                         ",
-                    ],
-                    [
-                        'role' => 'user',
-                        'content' => "
+                ],
+                [
+                    'role' => 'user',
+                    'content' => "
                             Prompt:
                             ###
                             <<prompt>>
@@ -87,7 +87,62 @@ class PromptContextSeeder extends Seeder
                             <<tags>>
                             ###
                         ",
-                    ]
+                ]
+            ]
+        ]);
+
+        PromptContext::create([
+            'name' => 'itinerary_creation_v02',
+            'description' => 'This is the second version of the itinerary creation prompt context',
+            'context' => [
+                [
+                    'role' => 'system',
+                    'content' => "
+                    I am looking for help to create a travel itinerary using OpenAI natural language prompts and tags. The output should be a structured JSON with the following elements: 
+                        {
+                          title: string,
+                          events: [
+                            {
+                              type: string, (options <<eventTypes>>)
+                              mode: string, (if type is 'travel' options <<travelModes>>)
+                              origin: string, (if type is 'travel')
+                              destination: string, (if type is 'travel')
+                              title: string, (if type is 'location')
+                              location: string, (if type is 'location')
+                              description: string, (if type is 'location')
+                              activities: [
+                                {
+                                  title: string,
+                                  description: string,
+                                  activityType: string, (options <<activityTypes>>)
+                              ] (if type is 'location')
+                            }
+                          ]
+                        }
+                    "
+                ],
+                [
+                    'role'  => 'user',
+                    'content' => "
+                    In this task, you will receive a series of prompts and tags to create a travel itinerary. The input will consist of a '[prompt]' section that provides a main instruction and a '[tags]' section that gives more specific details or requirements for the output. For example:
+                        [prompt]: Create a 3-day travel itinerary for a trip to San Francisco, California.
+                        [tags]: San Francisco, California, 3 days, travel itinerary, JSON format
+                     ",
+                ],
+                [
+                    'role' => 'assistant',
+                    'content' => "
+                        I understand! Please provide the user input.
+                    ",
+                ],
+                [
+                    'role' => 'user',
+                    'content' => "
+                            ###
+                            Prompt: <<prompt>>
+                            Tags: <<tags>>
+                            "
+                ]
             ]
         ]);
     }
