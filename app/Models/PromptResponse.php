@@ -11,6 +11,7 @@ class PromptResponse extends Model
 
     protected $fillable = [
         'prompt_id',
+        'response_type',
         'response',
     ];
 

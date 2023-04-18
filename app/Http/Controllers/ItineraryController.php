@@ -74,8 +74,16 @@ class ItineraryController extends Controller
 
         $prompt->promptResponses()->create([
             'prompt_id' => $prompt->id,
-            'response' => $formattedItinerary,
+            'response_type' => $formattedItinerary ? 'formatted' : 'raw',
+            'response' => $formattedItinerary ?? $rawItinerary,
         ]);
+
+        if (!$formattedItinerary) {
+            return response()->json([
+                'success' => false,
+                'message' => 'There was an error creating your itinerary. Please try again.'
+            ]);
+        }
 
         $itinerary = Itinerary::create([
             'user_id' => auth()->user()->id ?? 1,

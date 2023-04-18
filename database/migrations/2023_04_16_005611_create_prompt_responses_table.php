@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('prompt_responses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('prompt_id')->constrained();
+            $table->string('response_type');
             $table->json('response');
             $table->timestamps();
         });

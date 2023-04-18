@@ -145,5 +145,7 @@ class PromptContextSeeder extends Seeder
                 ]
             ]
         ]);
+
+        // V3 Uses JIust a bare bones frame of location events, details are searched separately and travel events are figured out by the system 
     }
 }
