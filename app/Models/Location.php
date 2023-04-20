@@ -21,6 +21,11 @@ class Location extends Model
         'type',
     ];
 
+    protected $hidden = [
+        'created_at',
+        'updated_at',
+    ];
+
     public function travelEvents()
     {
         return $this->hasMany(TravelEvent::class);

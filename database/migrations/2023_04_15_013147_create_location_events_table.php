@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('location_events', function (Blueprint $table) {
             $table->id();
-            $table->longText('description');
+            $table->longText('description')->nullable();
             $table->string('title');
             $table->foreignId('event_id')->constrained();
             $table->unsignedBigInteger('location_id')->nullable();

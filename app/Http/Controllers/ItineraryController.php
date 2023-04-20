@@ -10,14 +10,11 @@ use App\Services\PromptFormatService;
 use App\Models\Itinerary;
 use App\Models\Prompt;
 use App\Models\PromptContext;
-use App\Models\EventType;
 use App\Models\LocationEvent;
 use App\Models\Location;
 use App\Models\Activity;
-use App\Models\ActivityType;
-use App\Models\TravelMode;
-use App\Models\TravelEvent;
 use App\Models\TravelTag;
+use App\Models\Event;
 
 class ItineraryController extends Controller
 {
@@ -30,29 +27,29 @@ class ItineraryController extends Controller
         $this->promptFormatService = new PromptFormatService();
     }
 
-    public function createBasicItinerary(Request $request)
+    public function createEventsItinerary(Request $request)
     {
         $request->validate([
             'prompt' => 'required',
-            'tags' => 'required',
+            'interests' => 'required',
             'prompt_context' => 'required',
             'session_id' => 'required',
         ]);
 
-        $promptContextId = PromptContext::where('name', $request->prompt_context)->first()->id;
+        $promptContext = PromptContext::where('name', $request->prompt_context)->first();
 
         $prompt = Prompt::create([
             'user_id' => auth()->user()->id ?? 1,
-            'prompt_context_id' => $promptContextId,
+            'prompt_context_id' => $promptContext->id,
             'prompt' => $request->prompt,
-            'prompt_type' => 'create itinerary',
+            'prompt_type' => 'events',
             'flagged' => false,
         ]);
 
         // create and link travel tags to prompt
-        foreach ($request->tags as $tag) {
-            $tag = TravelTag::firstOrCreate(['name' => $tag]);
-            $prompt->travelTags()->attach($tag);
+        foreach ($request->interests as $interest) {
+            $interest = TravelTag::firstOrCreate(['name' => $interest]);
+            $prompt->travelTags()->attach($interest);
         }
 
         $flagged = $this->openaiAPIService->moderateInput($request->prompt);
@@ -66,87 +63,123 @@ class ItineraryController extends Controller
             ]);
         }
 
-        $context = $this->promptFormatService->createItineraryContext($request->prompt, $request->tags, $promptContextId);
+        $context = $this->promptFormatService->createEventsContext($request->prompt, $request->interests, $promptContext);
 
-        $rawItinerary = $this->openaiAPIService->contextualPrompt($context);
+        $rawEvents = $this->openaiAPIService->contextualPrompt($context);
 
-        $formattedItinerary = $this->promptFormatService->extractJson($rawItinerary->choices[0]->message->content);
+        $events = $this->promptFormatService->extractEvents($rawEvents->choices[0]->message->content);
 
         $prompt->promptResponses()->create([
             'prompt_id' => $prompt->id,
-            'response_type' => $formattedItinerary ? 'formatted' : 'raw',
-            'response' => $formattedItinerary ?? $rawItinerary,
+            'response_type' => $events ? 'formatted' : 'raw',
+            'response' => $events ?? $rawEvents,
         ]);
-
-        if (!$formattedItinerary) {
-            return response()->json([
-                'success' => false,
-                'message' => 'There was an error creating your itinerary. Please try again.'
-            ]);
-        }
 
         $itinerary = Itinerary::create([
             'user_id' => auth()->user()->id ?? 1,
             'prompt_id' => $prompt->id,
-            'title' => $formattedItinerary->title ?? 'Untitled Itinerary',
+            'title' => $events[0]->title ?? 'Untitled Itinerary',
         ]);
 
-        $eventTypes = EventType::all();
-        $activityTypes = ActivityType::all();
-        $travelModes = TravelMode::all();
+        if (!$events) {
+            return response()->json([
+                'success' => false,
+                'message' => 'There was an error creating your events. Please try again.'
+            ]);
+        }
 
-        // create events from formattedItinerary events array
-        foreach ($formattedItinerary->events as $key => $event) {
-            $eventType = $eventTypes->where('name', $event->type)->first();
-            $itinerary->events()->create([
+        $eventModels = [];
+
+        foreach ($events as $key => $event) {
+
+            $eventModel = Event::create([
                 'itinerary_id' => $itinerary->id,
-                'event_type_id' => $eventType ? $eventType->id : 'location',
+                'event_type_id' => 2,
+                'uuid' => $event['uuid'],
                 'order' => $key,
             ]);
 
-            // create appropriate event type location or travel
-            switch ($event->type) {
-                case 'location':
-                    $currentEvent = LocationEvent::create([
-                        'event_id' => $itinerary->events->last()->id,
-                        'title' => $event->title ?? 'Title not specified',
-                        'description' => $event->description ?? 'Description not specified',
-                    ]);
-                    $location = Location::firstOrCreate([
-                        'name' => $event->location ?? 'Location not specified',
-                    ]);
-                    $currentEvent->location()->associate($location);
-                    // create and attach activities to event
-                    foreach ($event->activities as $activity) {
-                        $activityType = $activityTypes->where('name', $activity->activityType)->first();
-                        $nextActivity = Activity::create([
-                            'title' => $activity->title,
-                            'description' => $activity->description,
-                            'activity_type_id' => $activityType ? $activityType->id : 17,
-                        ]);
-                        $currentEvent->activities()->save($nextActivity);
-                    }
-                    break;
-                case 'travel':
-                    $travelMode = $travelModes->where('name', $event->mode)->first();
-                    $currentEvent = TravelEvent::create([
-                        'event_id' => $itinerary->events->last()->id,
-                        'travel_mode_id' => $travelMode ? $travelMode->id : 8,
-                    ]);
-                    $originLocation = Location::firstOrCreate([
-                        'name' => $event->origin ?? 'Your home',
-                    ]);
-                    $destinationLocation = Location::firstOrCreate([
-                        'name' => $event->destination ?? 'Your home',
-                    ]);
-                    $currentEvent->origin()->associate($originLocation);
-                    $currentEvent->destination()->associate($destinationLocation);
-                    break;
-            }
+            $location = Location::firstOrCreate([
+                'name' => $event['location'] ?? 'Location not specified',
+            ]);
+
+            LocationEvent::create([
+                'event_id' => $eventModel->id,
+                'title' => $event['title'] ?? 'Untitled Event',
+
+                'location_id' => $location->id,
+            ]);
+
+            $eventModels[] = $eventModel;
+        };
+
+        $itinerary->events()->saveMany($eventModels);
+
+        return response()->json([
+            'itinerary' => $itinerary->load(['events', 'events.locationEvent.location']),
+            'success' => true
+        ]);
+    }
+
+    public function createLocationDetails(Request $request)
+    {
+        $request->validate([
+            'uuid' => 'required',
+            'itinerary_id' => 'required',
+            'prompt_context' => 'required',
+            'session_id' => 'required',
+        ]);
+
+
+        $promptContext = PromptContext::where('name', $request->prompt_context)->first();
+
+        $itinerary = Itinerary::with(['events', 'events.locationEvent.location'])->find($request->itinerary_id);
+
+        $context = $this->promptFormatService->createEventDetailsContext($request->uuid, $itinerary, $promptContext);
+
+        $prompt = Prompt::create([
+            'user_id' => auth()->user()->id ?? 1,
+            'prompt_context_id' => $promptContext->id,
+            'prompt' => "$request->uuid",
+            'prompt_type' => 'location_details',
+            'flagged' => false,
+        ]);
+
+        $rawLocationEvent = $this->openaiAPIService->contextualPrompt($context);
+
+        $locationEventDetails = $this->promptFormatService->extractLocationEvent($rawLocationEvent->choices[0]->message->content);
+
+        $prompt->promptResponses()->create([
+            'prompt_id' => $prompt->id,
+            'response_type' => $locationEventDetails ? 'formatted' : 'raw',
+            'response' => $locationEventDetails ?? $rawLocationEvent,
+        ]);
+
+        if (!$locationEventDetails) {
+            return response()->json([
+                'success' => false,
+                'message' => 'There was an error creating your location details. Please try again.'
+            ]);
+        }
+
+        $eventModel = $itinerary->events->where('uuid', $request->uuid)->first();
+        $locationEventModel = $eventModel->locationEvent;
+        $locationEventModel->description = $locationEventDetails['event']['description'];
+        $locationEventModel->save(); 
+
+        foreach ($locationEventDetails['activities'] as $activity) {
+            $activityModel = Activity::create([
+                'location_event_id' => $locationEventModel->id,
+                'title' => $activity['title'] ?? 'Untitled Activity',
+                'description' => $activity['description'] ?? 'No description provided',
+                'category' => $activity['category'] ?? 'Other',
+                'uuid' => $activity['uuid'],
+            ]);
+            $locationEventModel->activities()->save($activityModel);
         }
 
         return response()->json([
-            'itinerary' => $formattedItinerary,
+            'locationDetails' => $locationEventModel->load(['location', 'activities']),
             'success' => true
         ]);
     }

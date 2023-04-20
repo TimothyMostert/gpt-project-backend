@@ -15,6 +15,11 @@ class Itinerary extends Model
         'title',
     ];
 
+    protected $hidden = [
+        'created_at',
+        'updated_at',
+    ];
+
     public function prompt()
     {
         return $this->belongsTo(Prompt::class);

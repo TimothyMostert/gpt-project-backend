@@ -14,8 +14,7 @@ return new class extends Migration
         Schema::create('activities', function (Blueprint $table) {
             $table->id();
             $table->string('title');
-            $table->string('description');
-            $table->foreignId('activity_type_id')->constrained();
+            $table->longText('description');
             $table->unsignedBigInteger('location_event_id')->nullable();
             $table->foreign('location_event_id')->references('id')->on('location_events');
             $table->integer('order')->unsigned()->nullable();

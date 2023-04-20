@@ -12,15 +12,15 @@ class Activity extends Model
     protected $fillable = [
         'title',
         'description',
-        'activity_type_id',
         'location_event_id',
         'order',
     ];
 
-    public function activityType()
-    {
-        return $this->belongsTo(ActivityType::class);
-    }
+    protected $hidden = [
+        'created_at',
+        'updated_at',
+        'location_event_id'
+    ];
 
     public function locationEvent()
     {

@@ -20,6 +20,11 @@ class LocationEvent extends Model
         'activities' => 'array'
     ];
 
+    protected $hidden = [
+        'created_at',
+        'updated_at',
+    ];
+
     public function event()
     {
         return $this->belongsTo(Event::class);

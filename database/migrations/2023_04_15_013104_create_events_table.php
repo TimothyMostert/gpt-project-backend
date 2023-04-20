@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('event_type_id')->constrained();
             $table->foreignId('itinerary_id')->constrained();
+            $table->uuid('uuid')->nullable();
             $table->dateTime('start_time')->nullable();
             $table->dateTime('end_time')->nullable();
             $table->integer('order')->unsigned()->nullable();
