@@ -27,6 +27,21 @@ class ItineraryController extends Controller
         $this->promptFormatService = new PromptFormatService();
     }
 
+    public function createItineraryTitle(Request $request)
+    {
+        $request->validate([
+            'prompt' => 'required',
+        ]);
+
+        $formattedPrompt = "Create a title from the following prompt '" . $request->prompt . "'";
+
+        $title = $this->openaiAPIService->basicPrompt($formattedPrompt, 20, 'text-ada-001')['choices'][0]['text'];
+
+        return response()->json([
+            'title' => trim(preg_replace('/\s\s+/', ' ', $title)),
+        ]);
+    }
+
     public function createEventsItinerary(Request $request)
     {
         $request->validate([
@@ -68,6 +83,8 @@ class ItineraryController extends Controller
         $rawEvents = $this->openaiAPIService->contextualPrompt($context);
 
         $events = $this->promptFormatService->extractEvents($rawEvents->choices[0]->message->content);
+
+        error_log(json_encode($events));
 
         $prompt->promptResponses()->create([
             'prompt_id' => $prompt->id,

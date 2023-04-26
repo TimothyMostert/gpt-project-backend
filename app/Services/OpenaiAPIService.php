@@ -6,7 +6,7 @@ use OpenAI\Laravel\Facades\OpenAI as OpenAI;
 
 class OpenaiAPIService
 {
-    public function basicPrompt($prompt, $max_tokens = 2000, $model = 'gpt-3.5-turbo', $temperature = 0.5)
+    public function basicPrompt($prompt, $max_tokens = 2000, $model = 'gpt-3.5-turbo', $temperature = 0)
     {
         $result = OpenAI::completions()->create([
             'model' => $model,
@@ -18,7 +18,7 @@ class OpenaiAPIService
         return $result;
     }
 
-    public function contextualPrompt($context, $max_tokens = 2000, $model = 'gpt-3.5-turbo', $temperature = 0.5)
+    public function contextualPrompt($context, $max_tokens = 2000, $model = 'gpt-3.5-turbo', $temperature = 0)
     {
         $result = OpenAI::chat()->create([
             'model' => $model,
@@ -30,7 +30,7 @@ class OpenaiAPIService
         return $result;
     }
 
-    public function streamedContextualPrompt($context, $max_tokens = 2000, $model = 'gpt-3.5-turbo', $temperature = 0.5)
+    public function streamedContextualPrompt($context, $max_tokens = 2000, $model = 'gpt-3.5-turbo', $temperature = 0)
     {
         $result = OpenAI::chat()->create([
             'model' => $model,

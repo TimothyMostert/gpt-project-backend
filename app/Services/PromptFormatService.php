@@ -6,6 +6,7 @@ use App\Models\PromptContext;
 use App\Models\ActivityType;
 use App\Models\TravelMode;
 use App\Models\EventType;
+use Error;
 
 class PromptFormatService
 {
@@ -68,47 +69,31 @@ class PromptFormatService
         return $revisedContext;
     }
 
-    public function extractJson($string)
+    function extractEvents($response)
     {
-        // Find the starting and ending positions of the JSON object
-        $json_start = strpos($string, '{');
-        $json_end = strrpos($string, '}');
+        error_log(json_encode($response));
 
-        // Extract the JSON object from the string
-        $json_string = substr($string, $json_start, $json_end - $json_start + 1);
-
-        $json_string = json_decode($json_string);
-
-        // Return the extracted JSON
-        return $json_string;
-    }
-
-    public function extractEvents($response)
-    {
-        // Remove any extra text before the compressed itinerary
-        $compressedItinerary = strstr($response, 'u1|');
-
-        // Split the itinerary into lines
-        $lines = explode("\n", $compressedItinerary);
+        // Find all content within square brackets
+        $pattern = '/\[([^]]+)\]/';
+        preg_match_all($pattern, $response, $matches);
 
         // Initialize an empty events array
         $events = [];
 
+        error_log("Events output:");
+
         // Process each line
-        foreach ($lines as $line) {
-            // Skip empty lines
-            if (trim($line) === '') {
-                continue;
-            }
+        foreach ($matches[1] as $line) {
+            error_log($line);
 
             // Split the line into parts using the '|' separator
             $parts = explode('|', $line);
 
             // Create an event array from the parts and add it to the events array
             $events[] = [
-                'uuid' => trim($parts[0]),
-                'title' => trim($parts[1]),
-                'location' => trim($parts[2]),
+                'uuid' => $parts[0] ?? null,
+                'title' => $parts[1] ?? null,
+                'location' => $parts[2] ?? null,
             ];
         }
 
@@ -128,7 +113,7 @@ class PromptFormatService
             $location = $event->locationEvent->location->name;
 
             // Combine the extracted fields into a single line using '|' separator
-            $compressedEvent = "{$uuid}|{$title}|{$location}";
+            $compressedEvent = "[{$uuid}|{$title}|{$location}]";
 
             // Add the compressed event line to the compressed itinerary string, followed by a newline character
             $compressedItinerary .= $compressedEvent . "\n";
@@ -139,40 +124,40 @@ class PromptFormatService
 
     public function extractLocationEvent($response)
     {
-        $lines = explode("\n", $response);
-        $event = [
-            'uuid' => '',
-            'description' => '',
-            'type' => ''
-        ];
+        error_log(json_encode($response));
+
+        // Remove any extra text before the compressed event
+        $pattern = '/\[([^]]+)\]/';
+        preg_match_all($pattern, $response, $matches);
+
+        $event = [];
         $activities = [];
 
-        $eventRegex = '/^\s*u(\d+)\|([^|]+)\|([^|]+)\s*$/';
-        $activityRegex = '/^\s*a(\d+)\|([^|]+)\|([^|]+)\|([^|]+)\s*$/';
+        error_log("Location event output:");
 
-        foreach ($lines as $line) {
+        foreach ($matches[1] as $line) {
             error_log($line);
-            if (preg_match($eventRegex, $line, $matches)) {
+
+            $data = explode('|', $line);
+            $type = trim($data[0]);
+
+            if ($type === 'e') {
                 $event = [
-                    'uuid' => 'u' . $matches[1],
-                    'description' => $matches[2],
-                    'type' => $matches[3]
+                    'description' => $data[2],
                 ];
-            } elseif (preg_match($activityRegex, $line, $matches)) {
+            } elseif ($type === 'a') {
                 $activities[] = [
-                    'uuid' => 'a' . $matches[1],
-                    'title' => $matches[2],
-                    'description' => $matches[3],
-                    'category' => $matches[4]
+                    'uuid' => $data[1],
+                    'title' => $data[2],
+                    'description' => $data[3],
+                    'type' => $data[4],
                 ];
             }
         }
 
-        $locationEvent = [
+        return [
             'event' => $event,
-            'activities' => $activities
+            'activities' => $activities,
         ];
-
-        return $locationEvent;
     }
 }
