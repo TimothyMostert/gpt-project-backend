@@ -33,9 +33,9 @@ class ItineraryController extends Controller
             'prompt' => 'required',
         ]);
 
-        $formattedPrompt = "Create a title from the following prompt '" . $request->prompt . "'";
+        $formattedPrompt = "Create an itinerary title from the following prompt: '" . $request->prompt . "'";
 
-        $title = $this->openaiAPIService->basicPrompt($formattedPrompt, 20, 'text-ada-001')['choices'][0]['text'];
+        $title = $this->openaiAPIService->basicPrompt($formattedPrompt, 20, 'text-babbage-001')['choices'][0]['text'];
 
         return response()->json([
             'title' => trim(preg_replace('/\s\s+/', ' ', $title)),
@@ -77,6 +77,10 @@ class ItineraryController extends Controller
                 'message' => 'Your prompt contains inappropriate content.'
             ]);
         }
+
+        $formattedPrompt = "Create an itinerary title from the following prompt: '" . $request->prompt . "'";
+
+        $title = $this->openaiAPIService->basicPrompt($formattedPrompt, 20, 'text-babbage-001')['choices'][0]['text'];
 
         $context = $this->promptFormatService->createEventsContext($request->prompt, $request->interests, $promptContext);
 
@@ -133,6 +137,7 @@ class ItineraryController extends Controller
         $itinerary->events()->saveMany($eventModels);
 
         return response()->json([
+            'title' => trim(preg_replace('/\s\s+/', ' ', $title)),
             'itinerary' => $itinerary->load(['events', 'events.locationEvent.location']),
             'success' => true
         ]);
