@@ -51,8 +51,8 @@ class ItineraryController extends Controller
             'session_id' => 'required',
         ]);
 
+        // create prompt
         $promptContext = PromptContext::where('name', $request->prompt_context)->first();
-
         $prompt = Prompt::create([
             'user_id' => auth()->user()->id ?? 1,
             'prompt_context_id' => $promptContext->id,
@@ -67,8 +67,8 @@ class ItineraryController extends Controller
             $prompt->travelTags()->attach($interest);
         }
 
+        // check for inappropriate content
         $flagged = $this->openaiAPIService->moderateInput($request->prompt);
-
         if ($flagged) {
             $prompt->flagged = true;
             $prompt->save();
@@ -78,24 +78,23 @@ class ItineraryController extends Controller
             ]);
         }
 
-        $formattedPrompt = "Create an itinerary title from the following prompt: '" . $request->prompt . "'";
-
+        // create itinerary title
+        $formattedPrompt = "Create a short itinerary title from the following prompt: '" . $request->prompt . "' only a couple of words long.";
         $title = $this->openaiAPIService->basicPrompt($formattedPrompt, 20, 'text-babbage-001')['choices'][0]['text'];
 
+        // create itinerary
         $context = $this->promptFormatService->createEventsContext($request->prompt, $request->interests, $promptContext);
-
-        $rawEvents = $this->openaiAPIService->contextualPrompt($context);
-
+        $rawEvents = $this->openaiAPIService->contextualPrompt($context, 2048, 'gpt-4', 0);
         $events = $this->promptFormatService->extractEvents($rawEvents->choices[0]->message->content);
 
         error_log(json_encode($events));
 
+        // create prompt response and itinerary
         $prompt->promptResponses()->create([
             'prompt_id' => $prompt->id,
             'response_type' => $events ? 'formatted' : 'raw',
             'response' => $events ?? $rawEvents,
         ]);
-
         $itinerary = Itinerary::create([
             'user_id' => auth()->user()->id ?? 1,
             'prompt_id' => $prompt->id,
@@ -109,31 +108,28 @@ class ItineraryController extends Controller
             ]);
         }
 
+        // create events
         $eventModels = [];
-
         foreach ($events as $key => $event) {
-
             $eventModel = Event::create([
                 'itinerary_id' => $itinerary->id,
                 'event_type_id' => 2,
                 'uuid' => $event['uuid'],
                 'order' => $key,
             ]);
-
             $location = Location::firstOrCreate([
                 'name' => $event['location'] ?? 'Location not specified',
             ]);
-
             LocationEvent::create([
                 'event_id' => $eventModel->id,
                 'title' => $event['title'] ?? 'Untitled Event',
 
                 'location_id' => $location->id,
             ]);
-
             $eventModels[] = $eventModel;
         };
 
+        // link events to itinerary
         $itinerary->events()->saveMany($eventModels);
 
         return response()->json([
@@ -167,7 +163,7 @@ class ItineraryController extends Controller
             'flagged' => false,
         ]);
 
-        $rawLocationEvent = $this->openaiAPIService->contextualPrompt($context);
+        $rawLocationEvent = $this->openaiAPIService->contextualPrompt($context, 2048, 'gpt-4', 0);
 
         $locationEventDetails = $this->promptFormatService->extractLocationEvent($rawLocationEvent->choices[0]->message->content);
 
