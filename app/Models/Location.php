@@ -26,13 +26,8 @@ class Location extends Model
         'updated_at',
     ];
 
-    public function travelEvents()
+    public function events()
     {
-        return $this->hasMany(TravelEvent::class);
-    }
-
-    public function locationEvents()
-    {
-        return $this->hasMany(LocationEvent::class);
+        return $this->hasMany(event::class);
     }
 }

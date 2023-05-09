@@ -20,8 +20,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-
-Route::post('create/title', [ItineraryController::class, 'createItineraryTitle']);
-Route::post('create/events', [ItineraryController::class, 'createEventsItinerary']);
-Route::post('create/location-details', [ItineraryController::class, 'createLocationDetails']);
-Route::get('create/prompt', [ItineraryController::class, 'createRandomPrompt']);
+Route::post('events/create', [ItineraryController::class, 'createEventsItinerary']);
+Route::post('event/details', [ItineraryController::class, 'createEventDetails']);
+Route::post('event/edit', [ItineraryController::class, 'editEvent']);
+Route::get('prompt/create', [ItineraryController::class, 'createRandomPrompt']);

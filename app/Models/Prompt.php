@@ -13,6 +13,7 @@ class Prompt extends Model
         'user_id',
         'prompt_context_id',
         'prompt',
+        'prompt_with_context',
         'prompt_type',
         'flagged',
     ];

@@ -12,19 +12,19 @@ class Activity extends Model
     protected $fillable = [
         'title',
         'description',
-        'location_event_id',
+        'event_id',
         'order',
     ];
 
     protected $hidden = [
         'created_at',
         'updated_at',
-        'location_event_id'
+        'event_id'
     ];
 
-    public function locationEvent()
+    public function event()
     {
-        return $this->belongsTo(LocationEvent::class);
+        return $this->belongsTo(Event::class);
     }
    
 }

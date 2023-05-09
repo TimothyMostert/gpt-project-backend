@@ -56,7 +56,7 @@ return [
                         You are TravelGPT a personal travel assistant to a backend laravel API, 
                         you respond with structured information in the format [type|uuid|params]. 
                         There may be many params depending on the request. 
-                        Requests are always made in two parts first an event list and multiple requests for information about those events.
+                        Requests are always made in two parts first an events list and then multiple requests for information about those events.
                         The event list is always created first but the order of the requests for information about those events is random.
                         Please consider the event list carefully, considering the user's interests and the prompt.
                         The list should be ordered in a way that makes for an exciting and unique travel plan, 
@@ -91,9 +91,9 @@ return [
             ]
         ],
     ],
-    "location_details" => [
-        "location_details_v02" => [
-            'name' => 'location_details_v02',
+    "event_details" => [
+        "event_details_v02" => [
+            'name' => 'event_details_v02',
             'description' => 'A prompt context for fetching detailed information about locations and activities, including an array of activities',
             'context' => [
                 [
@@ -137,8 +137,8 @@ return [
                 ]
             ]
                 ],
-                'location_details_v03' => [
-                    'name' => 'location_details_v03',
+                'event_details_v03' => [
+                    'name' => 'event_details_v03',
                     'description' => 'A prompt context for fetching detailed information about locations and activities, including an array of activities',
                     'context' => [
                         [
@@ -166,6 +166,7 @@ return [
                                 [a|1|Guided Tour|Embark on a guided tour through Lorca's childhood home, revealing the history and personal stories behind each room.|Tour]
                                 [a|2|Literary Exhibition|Admire an extensive collection of Lorca's original manuscripts, letters, and photographs that document his literary journey.|Exhibition]
                                 [a|3|Cultural Workshops|Participate in engaging workshops that delve into the Andalusian culture and its influence on Lorca's works.|Workshop]
+                                Always include a maximum of 3 activities per event.
                             "
                         ],
                         [
@@ -173,7 +174,7 @@ return [
                             'content' => "
                                 Based on this previous events list response: <<events>>
                                 For the event with uuid: <<uuid>>
-                                Please create a description and a list of activities for the event.
+                                Please create a description and a list of 3 activities for the event.
                                 The description should be a short paragraph describing the event.
                                 The activities should be a list of activities related to the event.
                                 The result should be in the following format:
@@ -189,5 +190,43 @@ return [
                         ]
                     ]
                         ],
+    ],
+    'event_edit' => [
+        'event_edit_v01' => [
+            'name' => 'event_edit_v01',
+            'description' => 'A prompt context for editing an event',
+            'context' => [
+                [
+                    'role' => 'system',
+                    'content' => "
+                        You are TravelGPT a personal travel assistant to a backend laravel API, 
+                        you respond with structured information in the format [type|uuid|params]. 
+                        Bassed on previous input you have been asked to edit an event.
+                        Please consider the event list carefully, considering the user's new prompt and optional location.
+                        Edit the event title, description and optionally location.
+                        Edit the activities title and description to match the new event title and description.
+                        Make sure the activities are still relevant to the event.
+                        Make sure the new event title and description are relevant to the prompt and to the event list context provided.
+                        Here is an example of an updated event response:
+                        [e|Cervantes Birthplace Museum|Embark on an exciting look...|Alcalá de Henares, Spain]
+                        [a|Guided Tour|Embark on a guided tour through Lorca's childhood home, revealing the history and personal stories behind each room.]
+                        [a|Literary Exhibition|Admire an extensive collection of Lorca's original manuscripts, letters, and photographs that document his literary journey.]
+                        [a|Cultural Workshops|Participate in engaging workshops that delve into the Andalusian culture and its influence on Lorca's works.]
+                        in the form of:
+                        [e|title|description|location]
+                        [a|title|description]
+                    "
+                ],
+                [
+                    'role' => 'user',
+                    'content' => "
+                        Based on this previous events list response: <<events>>
+                        For this event: <<event>>
+                        Please edit the event based on the new prompt: <<prompt>>
+                        Optionally edit the location to: <<location>> (if not 'none') 
+                    "
+                ]
+            ],
+        ],
     ],
 ];

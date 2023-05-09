@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->longText('description');
-            $table->unsignedBigInteger('location_event_id')->nullable();
-            $table->foreign('location_event_id')->references('id')->on('location_events');
+            $table->unsignedBigInteger('event_id')->nullable();
+            $table->foreign('event_id')->references('id')->on('events');
             $table->integer('order')->unsigned()->nullable();
             $table->timestamps();
         });

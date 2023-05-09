@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->timestamps();
             $table->string('prompt');
+            $table->longText('prompt_with_context')->nullable();
             $table->string('prompt_type');
             $table->boolean('flagged')->default(false);
             $table->foreignId('user_id')->constrained();

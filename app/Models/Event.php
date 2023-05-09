@@ -16,6 +16,9 @@ class Event extends Model
         'start_time',
         'end_time',
         'order',
+        'title',
+        'description',
+        'location_id'
     ];
 
     protected $casts = [
@@ -38,13 +41,13 @@ class Event extends Model
         return $this->belongsTo(EventType::class);
     }
 
-    public function locationEvent()
+    public function location()
     {
-        return $this->hasOne(LocationEvent::class);
+        return $this->belongsTo(Location::class);
     }
 
-    public function travelEvent()
+    public function activities()
     {
-        return $this->hasOne(TravelEvent::class);
+        return $this->hasMany(Activity::class)->orderBy('order', 'asc');
     }
 }

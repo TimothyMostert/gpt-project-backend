@@ -2,39 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\PromptContext;
-use App\Models\ActivityType;
-use App\Models\TravelMode;
-use App\Models\EventType;
-use Error;
-
 class PromptFormatService
 {
-    public function createItineraryContext($prompt, $tags)
-    {
-        $promptContext = PromptContext::find(1);
-        $context = $promptContext->context;
-
-        $eventTypes = implode(', ', EventType::all()->pluck('name')->toArray());
-        $travelModes = implode(', ', TravelMode::all()->pluck('name')->toArray());
-        $activityTypes = implode(', ', ActivityType::all()->pluck('name')->toArray());
-
-        $tags = implode(', ', $tags);
-
-        $revisedContext = [];
-
-        foreach ($context as $step) {
-            $step['content'] = str_replace('<<eventTypes>>', $eventTypes, $step['content']);
-            $step['content'] = str_replace('<<travelModes>>', $travelModes, $step['content']);
-            $step['content'] = str_replace('<<activityTypes>>', $activityTypes, $step['content']);
-            $step['content'] = str_replace('<<prompt>>', $prompt, $step['content']);
-            $step['content'] = str_replace('<<tags>>', $tags, $step['content']);
-            $revisedContext[] = $step;
-        }
-
-        return $revisedContext;
-    }
-
     public function createEventsContext($prompt, $interests, $promptContext)
     {
         $context = $promptContext->context;
@@ -69,9 +38,29 @@ class PromptFormatService
         return $revisedContext;
     }
 
+    public function createEditEventContext($prompt, $location, $itinerary, $event, $promptContext)
+    {
+        $context = $promptContext->context;
+
+        $compressedEvents = $this->compressEvents($itinerary->events);
+
+        $compressedEvent = $this->compressEvent($event);
+
+        $revisedContext = [];
+
+        foreach ($context as $step) {
+            $step['content'] = str_replace('<<prompt>>', $prompt, $step['content']);
+            $step['content'] = str_replace('<<location>>', $location, $step['content']);
+            $step['content'] = str_replace('<<events>>', $compressedEvents, $step['content']);
+            $step['content'] = str_replace('<<event>>', $compressedEvent, $step['content']);
+            $revisedContext[] = $step;
+        }
+
+        return $revisedContext;
+    }
+
     function extractEvents($response)
     {
-        error_log(json_encode($response));
 
         // Find all content within square brackets
         $pattern = '/\[([^]]+)\]/';
@@ -79,8 +68,6 @@ class PromptFormatService
 
         // Initialize an empty events array
         $events = [];
-
-        error_log("Events output:");
 
         // Process each line
         foreach ($matches[1] as $line) {
@@ -109,8 +96,8 @@ class PromptFormatService
         foreach ($events as $event) {
             // Extract the uuid, title, and location from the event
             $uuid = $event->uuid;
-            $title = $event->locationEvent->title;
-            $location = $event->locationEvent->location->name;
+            $title = $event->title;
+            $location = $event->location->name;
 
             // Combine the extracted fields into a single line using '|' separator
             $compressedEvent = "[{$uuid}|{$title}|{$location}]";
@@ -122,9 +109,33 @@ class PromptFormatService
         return $compressedItinerary;
     }
 
-    public function extractLocationEvent($response)
+    public function compressEvent($event)
     {
-        error_log(json_encode($response));
+        // Initialize an empty compressed itinerary string
+        $compressedItinerary = '';
+
+        $title = $event->title;
+        $description = $event->description;
+        $location = $event->location->name;
+
+        $compressedEvent = "[e|{$title}|{$description}|{$location}]";
+
+        foreach ($event->activities as $activity) {
+            $title = $activity->title;
+            $description = $activity->description;
+
+            // Combine the extracted fields into a single line using '|' separator
+            $compressedEvent = "[a|{$title}|{$description}]";
+
+            // Add the compressed event line to the compressed itinerary string, followed by a newline character
+            $compressedItinerary .= $compressedEvent . "\n";
+        }
+
+        return $compressedItinerary;
+    }
+
+    public function extractEventDetails($response)
+    {
 
         // Remove any extra text before the compressed event
         $pattern = '/\[([^]]+)\]/';
@@ -132,8 +143,6 @@ class PromptFormatService
 
         $event = [];
         $activities = [];
-
-        error_log("Location event output:");
 
         foreach ($matches[1] as $line) {
             error_log($line);
@@ -151,6 +160,43 @@ class PromptFormatService
                     'title' => $data[2],
                     'description' => $data[3],
                     'type' => $data[4],
+                ];
+            }
+        }
+
+        return [
+            'event' => $event,
+            'activities' => $activities,
+        ];
+    }
+
+    public function extractFullEvent($response)
+    {
+        error_log(json_encode($response));
+
+        // Remove any extra text before the compressed event
+        $pattern = '/\[([^]]+)\]/';
+        preg_match_all($pattern, $response, $matches);
+
+        $event = [];
+        $activities = [];
+
+        foreach ($matches[1] as $line) {
+            error_log($line);
+
+            $data = explode('|', $line);
+            $type = trim($data[0]);
+
+            if ($type === 'e') {
+                $event = [
+                    'title' => $data[1],
+                    'description' => $data[2],
+                    'location' => $data[3],
+                ];
+            } elseif ($type === 'a') {
+                $activities[] = [
+                    'title' => $data[1],
+                    'description' => $data[2],
                 ];
             }
         }
