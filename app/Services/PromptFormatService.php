@@ -59,6 +59,37 @@ class PromptFormatService
         return $revisedContext;
     }
 
+    public function createAddEventContext($prompt, $location, $order, $itinerary, $promptContext)
+    {
+        $context = $promptContext->context;
+
+        $compressedEvents = $this->compressEvents($itinerary->events);
+
+        $revisedContext = [];
+
+        $previous = $order - 1;
+        $next = $order + 1;
+
+        if ($previous < 0) {
+            $previous = 0;
+        }
+
+        if ($next > count($itinerary->events)) {
+            $next = 'the end';
+        }
+
+        foreach ($context as $step) {
+            $step['content'] = str_replace('<<prompt>>', $prompt, $step['content']);
+            $step['content'] = str_replace('<<location>>', $location, $step['content']);
+            $step['content'] = str_replace('<<previous>>', $previous, $step['content']);
+            $step['content'] = str_replace('<<next>>', $next, $step['content']);
+            $step['content'] = str_replace('<<events>>', $compressedEvents, $step['content']);
+            $revisedContext[] = $step;
+        }
+
+        return $revisedContext;
+    }
+
     function extractEvents($response)
     {
 
@@ -114,21 +145,22 @@ class PromptFormatService
         // Initialize an empty compressed itinerary string
         $compressedItinerary = '';
 
+        $uuid = $event->uuid;
         $title = $event->title;
         $description = $event->description;
         $location = $event->location->name;
 
-        $compressedEvent = "[e|{$title}|{$description}|{$location}]";
+        $compressedItinerary = "[e|{$uuid}|{$title}|{$description}|{$location}]";
 
         foreach ($event->activities as $activity) {
             $title = $activity->title;
             $description = $activity->description;
 
             // Combine the extracted fields into a single line using '|' separator
-            $compressedEvent = "[a|{$title}|{$description}]";
+            $compressedActivity = "[a|{$title}|{$description}]";
 
             // Add the compressed event line to the compressed itinerary string, followed by a newline character
-            $compressedItinerary .= $compressedEvent . "\n";
+            $compressedItinerary .= $compressedActivity . "\n";
         }
 
         return $compressedItinerary;
@@ -156,10 +188,8 @@ class PromptFormatService
                 ];
             } elseif ($type === 'a') {
                 $activities[] = [
-                    'uuid' => $data[1],
-                    'title' => $data[2],
-                    'description' => $data[3],
-                    'type' => $data[4],
+                    'title' => $data[1],
+                    'description' => $data[2],
                 ];
             }
         }
@@ -172,8 +202,6 @@ class PromptFormatService
 
     public function extractFullEvent($response)
     {
-        error_log(json_encode($response));
-
         // Remove any extra text before the compressed event
         $pattern = '/\[([^]]+)\]/';
         preg_match_all($pattern, $response, $matches);

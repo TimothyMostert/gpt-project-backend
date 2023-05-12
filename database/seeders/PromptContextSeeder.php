@@ -15,10 +15,26 @@ class PromptContextSeeder extends Seeder
      */
     public function run()
     {
-        PromptContext::create(config('contexts.events_creation.events_creation_v01'));
-        PromptContext::create(config('contexts.events_creation.events_creation_v02')); //gpt4 first try
-        PromptContext::create(config('contexts.event_details.event_details_v02'));
-        PromptContext::create(config('contexts.event_details.event_details_v03')); //gpt4 first try
-        PromptContext::create(config('contexts.event_edit.event_edit_v01'));
+        // VERSION !
+        PromptContext::create([
+            'name' => 'events_1',
+            'description' => 'Version 1 of the fullflow events prompt context for use with gpt4, focused on consistency and brevity.',
+            'context' => config('contexts.full_gpt4_v1.events')
+        ]);
+        PromptContext::create([
+            'name' => 'details_1',
+            'description' => 'Version 1 of the fullflow details prompt context for use with gpt4, focused on consistency and brevity.',
+            'context' => config('contexts.full_gpt4_v1.details')
+        ]);
+        PromptContext::create([
+            'name' => 'edit_1',
+            'description' => 'A more concise edit event prompt context for use with gpt4.',
+            'context' => config('contexts.full_gpt4_v1.edit')
+        ]);
+        PromptContext::create([
+            'name' => 'add_1',
+            'description' => 'A more concise add event prompt context for use with gpt4.',
+            'context' => config('contexts.full_gpt4_v1.add')
+        ]);
     }
 }

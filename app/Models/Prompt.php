@@ -18,6 +18,10 @@ class Prompt extends Model
         'flagged',
     ];
 
+    public $casts = [
+        'prompt_with_context' => 'array',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);
