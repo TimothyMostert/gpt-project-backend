@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\ItineraryController;
+use App\Http\Controllers\GoogleAPIController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,3 +26,5 @@ Route::post('event/details', [ItineraryController::class, 'createEventDetails'])
 Route::post('event/edit', [ItineraryController::class, 'editEvent']);
 Route::post('event/add', [ItineraryController::class, 'addEvent']);
 Route::get('prompt/create', [ItineraryController::class, 'createRandomPrompt']);
+
+Route::post('google/places/photos', [GoogleAPIController::class, 'getPhotosFromLocation']);
