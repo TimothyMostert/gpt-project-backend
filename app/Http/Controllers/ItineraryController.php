@@ -324,12 +324,11 @@ class ItineraryController extends Controller
 
         // create event
         $eventModel = Event::create([
-            'title' => $event['event']['title'],
             'description' => $event['event']['description'],
             'itinerary_id' => $itinerary->id,
             'event_type_id' => 2,
             'uuid' => Str::uuid(),
-            'title' => $event['title'] ?? 'Untitled Event',
+            'title' => $event['event']['title'] ?? 'Untitled Event',
             'location_id' => $location->id,
             'order' => $request->order,
         ]);
