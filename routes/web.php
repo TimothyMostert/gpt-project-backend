@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\LoginController;
+use App\Http\Controllers\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,6 +19,13 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Auth::routes();
+Route::post('user/register', [UserController::class, 'registerUserWithPassword']);
 
+Route::post('login/auth/password', [LoginController::class, 'loginWithPassword']);
+
+Route::get('login/auth/{provider}', [LoginController::class, 'redirectToProvider']);
+
+Route::get('login/auth/{provider}/callback', [LoginController::class, 'handleProviderCallback']);
+
+Auth::routes();
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
