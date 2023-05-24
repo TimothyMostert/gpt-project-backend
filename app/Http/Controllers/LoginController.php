@@ -10,6 +10,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use App\Repository\UserRepository;
+use Laravel\Sanctum\PersonalAccessToken;
 
 
 class LoginController extends Controller
@@ -43,20 +44,25 @@ class LoginController extends Controller
 
         $token = $user->createToken('Access-Token')->plainTextToken;
 
-        $accounts = $user->accounts()->get();
-
         return response()->json([
                 'user' => $user,
-                'accounts' => $accounts
+                'token' => $token
         ], 200, ['token' => $token])
             ->header('Access-Control-Expose-Headers', 'token');
     }
 
-    public function logoutUser() {
-        $user = $this->userRepo->currentAuthenticatedUser();
-        $user->tokens()->where('id', auth()->id())->delete();
-        Auth::guard('web')->logout();
-        return response()->json("user successfully logged out!", 200);
+    public function logoutUser(Request $request) 
+    {
+    // Get user's current token
+    $token = $request->user()->currentAccessToken();
+
+    // Revoke the token
+    $token->delete();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'User successfully logged out!'
+    ], 200);
     }
 
     public function redirectToProvider($provider)
@@ -78,17 +84,20 @@ class LoginController extends Controller
 
         try {
             $socialiteUser = Socialite::driver($provider)->stateless()->user();
-        } catch (\ClientException $exception) {
-            return response()->json(['error' => 'Invalid credentials provided'], 422);
+        } catch (\Exception $e) {
+            error_log(json_encode($e->getMessage()));
+            return response()->json(['error' => 'Invalid credentials provided', 'exception', $e->getMessage()], 422);
         }
+
+        error_log(json_encode($socialiteUser));
 
         $user = $this->userRepo->createUserFromSocialite($socialiteUser, $provider);
         $token = $user->createToken('Access-Token')->plainTextToken;
-        $accounts = $user->accounts()->get();
 
         return response()->json([
+                'success' => true,
                 'user' => $user,
-                'accounts' => $accounts
+                'avatar' => $socialiteUser->getAvatar(),
             ], 200, ['token' => $token])
             ->header('Access-Control-Expose-Headers', 'token');
     }

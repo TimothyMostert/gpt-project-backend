@@ -33,13 +33,16 @@ class UserController extends Controller
             'email' => 'required|email|unique:users',
             'password' => 'required|min:6',
         ]);
+
         $user = $this->userRepo->createUser(
             $request['name'],
             $request['email'],
             $request['password']
         );
+
         return response()->json([
             'success' => true,
+            'user' => $user,
             'message' => 'User successfully registered!'
         ], 201);
     }

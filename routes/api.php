@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\ItineraryController;
 use App\Http\Controllers\GoogleAPIController;
+use App\Http\Controllers\LoginController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,6 +21,8 @@ use App\Http\Controllers\GoogleAPIController;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+Route::get('user/logout', [LoginController::class, 'logoutUser']);
 
 Route::post('events/create', [ItineraryController::class, 'createEventsItinerary']);
 Route::post('event/details', [ItineraryController::class, 'createEventDetails']);

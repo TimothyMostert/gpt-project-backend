@@ -25,7 +25,7 @@ Route::post('login/auth/password', [LoginController::class, 'loginWithPassword']
 
 Route::get('login/auth/{provider}', [LoginController::class, 'redirectToProvider']);
 
-Route::get('login/auth/{provider}/callback', [LoginController::class, 'handleProviderCallback']);
+Route::post('login/auth/{provider}/callback', [LoginController::class, 'handleProviderCallback']);
 
 Auth::routes();
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
