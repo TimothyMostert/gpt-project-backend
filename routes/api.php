@@ -23,6 +23,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::get('user/logout', [LoginController::class, 'logoutUser']);
+Route::get('user/auth', [LoginController::class, 'authenticateUserFromToken']);
 
 Route::post('events/create', [ItineraryController::class, 'createEventsItinerary']);
 Route::post('event/details', [ItineraryController::class, 'createEventDetails']);

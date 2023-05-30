@@ -22,6 +22,20 @@ class LoginController extends Controller
         $this->userRepo = new UserRepository();
     }
 
+    public function authenticateUserFromToken(Request $request) {
+        // check if the token is valid
+        $token = $request->bearerToken();
+        if (!$token) {
+            return new JsonResponse([
+                'error' => 'Token not found.'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+        $user = $request->user();
+        return response()->json([
+            'user' => $user
+        ]);
+    }
+
     public function loginWithPassword(Request $request) {
         $request->validate([
             'email' => 'required|email',
