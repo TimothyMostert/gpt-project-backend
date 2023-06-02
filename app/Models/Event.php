@@ -10,14 +10,14 @@ class Event extends Model
     use HasFactory;
 
     protected $fillable = [
-        'event_type_id',
+        'event_type',
         'uuid',
-        'itinerary_id',
         'start_time',
         'end_time',
         'order',
         'title',
         'description',
+        'trip_id',
         'location_id'
     ];
 
@@ -31,14 +31,9 @@ class Event extends Model
         'updated_at',
     ];
 
-    public function itinerary()
+    public function trip()
     {
-        return $this->belongsTo(Itinerary::class);
-    }
-
-    public function eventType()
-    {
-        return $this->belongsTo(EventType::class);
+        return $this->belongsTo(Trip::class);
     }
 
     public function location()

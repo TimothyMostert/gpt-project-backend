@@ -1,33 +1,33 @@
 <?php
 
 return [
-    'random_itinerary_concepts' => [
+    'random_trip_concepts' => [
         [
             'prompt' => "Create a culinary adventure through Italy, focusing on unique regional dishes and local cooking classes.",
             'tags' => ["Culture", "Sightseeing", "History"],
         ],
         [
-            'prompt' => "Design a wildlife safari itinerary in Tanzania, with a mix of game drives, birdwatching, and cultural experiences.",
+            'prompt' => "Design a wildlife safari trip in Tanzania, with a mix of game drives, birdwatching, and cultural experiences.",
             'tags' => ["Adventure", "Nature", "Wildlife"],
         ],
         [
-            'prompt' => "Craft a sustainable eco-tour itinerary in Costa Rica, featuring eco-lodges, rainforest hikes, and wildlife conservation projects.",
+            'prompt' => "Craft a sustainable eco-tour trip in Costa Rica, featuring eco-lodges, rainforest hikes, and wildlife conservation projects.",
             'tags' => ["Nature", "Wildlife", "Adventure"],
         ],
         [
-            'prompt' => "Build a road trip itinerary along the scenic Pacific Coast Highway, including must-see attractions, local eateries, and hidden gems.",
+            'prompt' => "Build a road trip along the scenic Pacific Coast Highway, including must-see attractions, local eateries, and hidden gems.",
             'tags' => ["Sightseeing", "Nature", "Beach"],
         ],
         [
-            'prompt' => "Develop an itinerary exploring Japan's ancient history and cultural heritage, with visits to temples, shrines, and traditional arts performances.",
+            'prompt' => "Develop an trip exploring Japan's ancient history and cultural heritage, with visits to temples, shrines, and traditional arts performances.",
             'tags' => ["Culture", "History", "Sightseeing"],
         ],
         [
-            'prompt' => "Construct an adventure itinerary in New Zealand, featuring adrenaline-pumping activities like bungee jumping, skydiving, and glacier hiking.",
+            'prompt' => "Construct an adventure trip in New Zealand, featuring adrenaline-pumping activities like bungee jumping, skydiving, and glacier hiking.",
             'tags' => ["Adventure", "Sports", "Nature"],
         ],
         [
-            'prompt' => "Curate an itinerary for a solo traveler exploring Scandinavia's natural beauty and vibrant city life in Norway, Sweden, and Denmark.",
+            'prompt' => "Curate an trip for a solo traveler exploring Scandinavia's natural beauty and vibrant city life in Norway, Sweden, and Denmark.",
             'tags' => ["Nature", "Sightseeing", "Culture"],
         ],
         [
@@ -35,7 +35,7 @@ return [
             'tags' => ["History", "Culture", "Sightseeing"],
         ],
         [
-            'prompt' => "Design a yoga and wellness retreat itinerary in Bali, highlighting spiritual experiences and rejuvenating activities.",
+            'prompt' => "Design a yoga and wellness retreat trip in Bali, highlighting spiritual experiences and rejuvenating activities.",
             'tags' => ["Relaxation", "Spa", "Romance"],
         ],
         [
@@ -59,7 +59,7 @@ return [
             'tags' => ["Nature", "Adventure", "Hiking"],
         ],
         [
-            'prompt' => "Curate an island-hopping itinerary in Greece, exploring the beauty and history of the Cyclades and Dodecanese islands.",
+            'prompt' => "Curate an island-hopping trip in Greece, exploring the beauty and history of the Cyclades and Dodecanese islands.",
             'tags' => ["Beach", "Sightseeing", "Culture"],
         ],
         [
@@ -67,7 +67,7 @@ return [
             'tags' => ["Nature", "Sightseeing", "Relaxation"],
         ],
         [
-            'prompt' => "Construct a cultural immersion itinerary in India, highlighting festivals, cuisine, and sacred sites.",
+            'prompt' => "Construct a cultural immersion trip in India, highlighting festivals, cuisine, and sacred sites.",
             'tags' => ["Culture", "Sightseeing", "History"],
         ],
         [
@@ -75,7 +75,7 @@ return [
             'tags' => ["Sightseeing", "Sports", "Nature"],
         ],
         [
-            'prompt' => "Create an itinerary exploring the natural wonders of Iceland, with a focus on waterfalls, geysers, and the Northern Lights.",
+            'prompt' => "Create an trip exploring the natural wonders of Iceland, with a focus on waterfalls, geysers, and the Northern Lights.",
             'tags' => ["Nature", "Adventure", "Sightseeing"],
         ],
         [
@@ -87,7 +87,7 @@ return [
             'tags' => ["History", "Culture", "Sightseeing"],
         ],
         [
-            'prompt' => "Craft an itinerary highlighting the diverse landscapes of South Africa, from safaris to stunning coastlines.",
+            'prompt' => "Craft an trip highlighting the diverse landscapes of South Africa, from safaris to stunning coastlines.",
             'tags' => ["Nature", "Wildlife", "Beach"],
         ],
         [
@@ -111,11 +111,11 @@ return [
             'tags' => ["Nature", "Sightseeing", "Relaxation"],
         ],
         [
-            'prompt' => "Construct an itinerary highlighting UNESCO World Heritage Sites across Central and South America, from Machu Picchu to Tikal.",
+            'prompt' => "Construct an trip highlighting UNESCO World Heritage Sites across Central and South America, from Machu Picchu to Tikal.",
             'tags' => ["History", "Sightseeing", "Culture"],
         ],
         [
-            'prompt' => "Construct an itinerary highlighting UNESCO World Heritage Sites across Central and South America, from Machu Picchu to Tikal.",
+            'prompt' => "Construct an trip highlighting UNESCO World Heritage Sites across Central and South America, from Machu Picchu to Tikal.",
             'tags' => ["History", "Sightseeing", "Culture"],
         ],
     ],

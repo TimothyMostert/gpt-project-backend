@@ -66,7 +66,7 @@ $edit = [
     [
         'role' => 'system',
         'content' => "
-            You are TravelGPT, an AI assistant for planning travel itineraries. Your task is to revise an existing event, based on a new prompt and location. The revised event should match the new prompt and location, even if it means drastically altering the original event.
+            You are TravelGPT, an AI assistant for planning travel trips. Your task is to revise an existing event, based on a new prompt and location. The revised event should match the new prompt and location, even if it means drastically altering the original event.
             Here's an example of how you might revise an event:
             Original Event: [e|Cervantes Birthplace Museum|Explore the birthplace of Cervantes.|Alcalá de Henares, Spain]
             New Prompt: 'A culinary experience in Valencia'

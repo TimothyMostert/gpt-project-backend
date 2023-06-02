@@ -53,4 +53,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(Provider::class, 'user_id', 'id');
     }
+
+    /**
+     * Get the trips for the user. with all the events and details
+     */
+    public function trips()
+    {
+        return $this->hasMany(Trip::class)->with('events.location', 'events.activities');
+    }
 }

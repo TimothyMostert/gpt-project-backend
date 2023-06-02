@@ -3,9 +3,10 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-use App\Http\Controllers\ItineraryController;
+use App\Http\Controllers\TripController;
 use App\Http\Controllers\GoogleAPIController;
 use App\Http\Controllers\LoginController;
+use App\Http\Controllers\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,10 +26,14 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::get('user/logout', [LoginController::class, 'logoutUser']);
 Route::get('user/auth', [LoginController::class, 'authenticateUserFromToken']);
 
-Route::post('events/create', [ItineraryController::class, 'createEventsItinerary']);
-Route::post('event/details', [ItineraryController::class, 'createEventDetails']);
-Route::post('event/edit', [ItineraryController::class, 'editEvent']);
-Route::post('event/add', [ItineraryController::class, 'addEvent']);
-Route::get('prompt/create', [ItineraryController::class, 'createRandomPrompt']);
+Route::get('user/trips', [UserController::class, 'getUserTrips']);
+
+Route::post('trip/create', [TripController::class, 'createEventsTrip']);
+
+Route::post('event/details', [TripController::class, 'createEventDetails']);
+Route::post('event/edit', [TripController::class, 'editEvent']);
+Route::post('event/add', [TripController::class, 'addEvent']);
+
+Route::get('prompt/create', [TripController::class, 'createRandomPrompt']);
 
 Route::post('google/places/photos', [GoogleAPIController::class, 'getPhotosFromLocation']);

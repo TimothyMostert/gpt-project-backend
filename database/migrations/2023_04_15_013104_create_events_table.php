@@ -13,8 +13,9 @@ return new class extends Migration
     {
         Schema::create('events', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('event_type_id')->constrained();
-            $table->foreignId('itinerary_id')->constrained();
+            $table->string('event_type')->nullable();
+            $table->unsignedBigInteger('trip_id')->nullable();
+            $table->foreign('trip_id')->references('id')->on('trips');
             $table->unsignedBigInteger('location_id')->nullable();
             $table->foreign('location_id')->references('id')->on('locations');
             $table->string('title')->nullable();

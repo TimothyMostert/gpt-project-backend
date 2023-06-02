@@ -67,4 +67,9 @@ class UserRepository
         $user = $this->currentAuthenticatedUser();
         $user::delete();
     }
+
+    public function getTrips() {
+        $user = $this->currentAuthenticatedUser();
+        return $user->trips()->get();
+    }
 }

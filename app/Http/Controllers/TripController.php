@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 use App\Services\OpenaiAPIService;
 use App\Services\PromptFormatService;
 
-use App\Models\Itinerary;
+use App\Models\Trip;
 use App\Models\Prompt;
 use App\Models\PromptContext;
 use App\Models\Location;
@@ -16,7 +16,7 @@ use App\Models\Activity;
 use App\Models\TravelTag;
 use App\Models\Event;
 
-class ItineraryController extends Controller
+class TripController extends Controller
 {
     private $openaiAPIService;
     private $promptFormatService;
@@ -27,7 +27,7 @@ class ItineraryController extends Controller
         $this->promptFormatService = new PromptFormatService();
     }
 
-    public function createEventsItinerary(Request $request)
+    public function createEventsTrip(Request $request)
     {
         $request->validate([
             'prompt' => 'required',
@@ -64,9 +64,10 @@ class ItineraryController extends Controller
             ]);
         }
 
-        // create itinerary title
-        $formattedPrompt = "Create a short itinerary title from the following prompt: '" . $request->prompt . "' only a couple of words long.";
+        // create trip title
+        $formattedPrompt = "Create a short trip title from the following prompt: '" . $request->prompt . "' only a couple of words long.";
         $title = $this->openaiAPIService->basicPrompt($formattedPrompt, 20, 'text-babbage-001')['choices'][0]['text'];
+        $title = trim(preg_replace('/\s\s+/', ' ', $title));
 
         // create prompt context
         $context = $this->promptFormatService->createEventsContext($request->prompt, $request->interests, $promptContext);
@@ -76,17 +77,17 @@ class ItineraryController extends Controller
         $rawEvents = $this->openaiAPIService->contextualPrompt($context, 2048, $request['model'], 0);
         $events = $this->promptFormatService->extractEvents($rawEvents->choices[0]->message->content);
 
-        // create prompt response and itinerary
+        // create prompt response and trip
         $prompt->promptResponses()->create([
             'prompt_id' => $prompt->id,
             'formatted' => $events ? true : false,
             'response' => $events ?? "Failed to create events. Please try again.",
             'raw_response' => $rawEvents->choices[0]->message->content
         ]);
-        $itinerary = Itinerary::create([
+        $trip = Trip::create([
             'user_id' => auth()->user()->id ?? 1,
             'prompt_id' => $prompt->id,
-            'title' => $events[0]->title ?? 'Untitled Itinerary',
+            'title' => $title ?? 'Untitled Trip',
         ]);
 
         if (!$events) {
@@ -103,8 +104,8 @@ class ItineraryController extends Controller
                 'name' => $event['location'] ?? 'Location not specified',
             ]);
             $eventModel = Event::create([
-                'itinerary_id' => $itinerary->id,
-                'event_type_id' => 2,
+                'trip_id' => $trip->id,
+                'event_type' => 'location',
                 'uuid' => $event['uuid'],
                 'title' => $event['title'] ?? 'Untitled Event',
                 'location_id' => $location->id,
@@ -113,12 +114,12 @@ class ItineraryController extends Controller
             $eventModels[] = $eventModel;
         };
 
-        // link events to itinerary
-        $itinerary->events()->saveMany($eventModels);
+        // link events to trip
+        $trip->events()->saveMany($eventModels);
 
         return response()->json([
-            'title' => trim(preg_replace('/\s\s+/', ' ', $title)),
-            'itinerary' => $itinerary->load(['events', 'events.location']),
+            'title' => $title,
+            'trip' => $trip->load(['events', 'events.location']),
             'success' => true
         ]);
     }
@@ -127,7 +128,7 @@ class ItineraryController extends Controller
     {
         $request->validate([
             'uuid' => 'required',
-            'itinerary_id' => 'required',
+            'trip_id' => 'required',
             'prompt_context' => 'required',
             'session_id' => 'required',
             'model' => 'required',
@@ -135,9 +136,9 @@ class ItineraryController extends Controller
 
         $promptContext = PromptContext::where('name', $request->prompt_context)->first();
 
-        $itinerary = Itinerary::with(['events', 'events.location'])->find($request->itinerary_id);
+        $trip = Trip::with(['events', 'events.location'])->find($request->trip_id);
 
-        $context = $this->promptFormatService->createEventDetailsContext($request->uuid, $itinerary, $promptContext);
+        $context = $this->promptFormatService->createEventDetailsContext($request->uuid, $trip, $promptContext);
 
         $prompt = Prompt::create([
             'user_id' => auth()->user()->id ?? 1,
@@ -166,7 +167,7 @@ class ItineraryController extends Controller
             ]);
         }
 
-        $eventModel = $itinerary->events->where('uuid', $request->uuid)->first();
+        $eventModel = $trip->events->where('uuid', $request->uuid)->first();
         $eventModel->description = $eventDetails['event']['description'];
         $eventModel->save();
 
@@ -190,18 +191,18 @@ class ItineraryController extends Controller
         // validate request
         $request->validate([
             'event_id' => 'required',
-            'itinerary_id' => 'required',
+            'trip_id' => 'required',
             'prompt' => 'required',
             'prompt_context' => 'required',
             'session_id' => 'required',
             'model' => 'required',
         ]);
 
-        // get itinerary
-        $itinerary = Itinerary::with(['events', 'events.location', 'events.activities'])->find($request->itinerary_id);
+        // get trip
+        $trip = Trip::with(['events', 'events.location', 'events.activities'])->find($request->trip_id);
 
         // get event
-        $event = $itinerary->events->where('id', $request->event_id)->first();
+        $event = $trip->events->where('id', $request->event_id)->first();
 
         // get prompt context
         $promptContext = PromptContext::where('name', $request->prompt_context)->first();
@@ -209,7 +210,7 @@ class ItineraryController extends Controller
         $location = $request->location ?? $event->location->name;
 
         // create prompt context
-        $context = $this->promptFormatService->createEditEventContext($request->prompt, $location, $itinerary, $event, $promptContext);
+        $context = $this->promptFormatService->createEditEventContext($request->prompt, $location, $trip, $event, $promptContext);
 
         // create prompt
         $prompt = Prompt::create([
@@ -227,7 +228,7 @@ class ItineraryController extends Controller
         // extract event
         $event = $this->promptFormatService->extractFullEvent($rawEvent->choices[0]->message->content);
 
-        // create prompt response and itinerary
+        // create prompt response and trip
         $prompt->promptResponses()->create([
             'prompt_id' => $prompt->id,
             'formatted' => $event ? true : false,
@@ -269,7 +270,7 @@ class ItineraryController extends Controller
     {
         // validate request
         $request->validate([
-            'itinerary_id' => 'required',
+            'trip_id' => 'required',
             'prompt_context' => 'required',
             'prompt' => 'required',
             'location' => 'required',
@@ -278,14 +279,14 @@ class ItineraryController extends Controller
             'model' => 'required',
         ]);
 
-        // get itinerary
-        $itinerary = Itinerary::with(['events', 'events.location', 'events.activities'])->find($request->itinerary_id);
+        // get trip
+        $trip = Trip::with(['events', 'events.location', 'events.activities'])->find($request->trip_id);
 
         // get prompt context
         $promptContext = PromptContext::where('name', $request->prompt_context)->first();
 
         // create prompt context
-        $context = $this->promptFormatService->createAddEventContext($request->prompt, $request->location, $request->order, $itinerary, $promptContext);
+        $context = $this->promptFormatService->createAddEventContext($request->prompt, $request->location, $request->order, $trip, $promptContext);
 
         // create prompt
         $prompt = Prompt::create([
@@ -303,7 +304,7 @@ class ItineraryController extends Controller
         // extract event
         $event = $this->promptFormatService->extractFullEvent($rawEvent->choices[0]->message->content);
 
-        // create prompt response and itinerary
+        // create prompt response and trip
         $prompt->promptResponses()->create([
             'prompt_id' => $prompt->id,
             'formatted' => $event ? true : false,
@@ -325,8 +326,8 @@ class ItineraryController extends Controller
         // create event
         $eventModel = Event::create([
             'description' => $event['event']['description'],
-            'itinerary_id' => $itinerary->id,
-            'event_type_id' => 2,
+            'trip_id' => $trip->id,
+            'event_type' => 'location',
             'uuid' => Str::uuid(),
             'title' => $event['event']['title'] ?? 'Untitled Event',
             'location_id' => $location->id,
@@ -356,7 +357,7 @@ class ItineraryController extends Controller
 
     public function createRandomPrompt()
     {
-        $prompts = config('prompts.random_itinerary_concepts');
+        $prompts = config('prompts.random_trip_concepts');
 
         $randomPrompt = $prompts[array_rand($prompts)];
 

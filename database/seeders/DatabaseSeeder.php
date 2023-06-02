@@ -14,11 +14,8 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
-            TravelModeSeeder::class,
             UserSeeder::class,
-            EventTypeSeeder::class,
             PromptContextSeeder::class,
-            ActivityTypeSeeder::class,
         ]);
 
     }

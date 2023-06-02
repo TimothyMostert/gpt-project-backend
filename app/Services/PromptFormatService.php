@@ -21,11 +21,11 @@ class PromptFormatService
         return $revisedContext;
     }
 
-    public function createEventDetailsContext($uuid, $itinerary, $promptContext)
+    public function createEventDetailsContext($uuid, $trip, $promptContext)
     {
         $context = $promptContext->context;
 
-        $compressedEvents = $this->compressEvents($itinerary->events);
+        $compressedEvents = $this->compressEvents($trip->events);
 
         $revisedContext = [];
 
@@ -38,11 +38,11 @@ class PromptFormatService
         return $revisedContext;
     }
 
-    public function createEditEventContext($prompt, $location, $itinerary, $event, $promptContext)
+    public function createEditEventContext($prompt, $location, $trip, $event, $promptContext)
     {
         $context = $promptContext->context;
 
-        $compressedEvents = $this->compressEvents($itinerary->events);
+        $compressedEvents = $this->compressEvents($trip->events);
 
         $compressedEvent = $this->compressEvent($event);
 
@@ -59,11 +59,11 @@ class PromptFormatService
         return $revisedContext;
     }
 
-    public function createAddEventContext($prompt, $location, $order, $itinerary, $promptContext)
+    public function createAddEventContext($prompt, $location, $order, $trip, $promptContext)
     {
         $context = $promptContext->context;
 
-        $compressedEvents = $this->compressEvents($itinerary->events);
+        $compressedEvents = $this->compressEvents($trip->events);
 
         $revisedContext = [];
 
@@ -74,7 +74,7 @@ class PromptFormatService
             $previous = 0;
         }
 
-        if ($next > count($itinerary->events)) {
+        if ($next > count($trip->events)) {
             $next = 'the end';
         }
 
@@ -120,8 +120,8 @@ class PromptFormatService
 
     public function compressEvents($events)
     {
-        // Initialize an empty compressed itinerary string
-        $compressedItinerary = '';
+        // Initialize an empty compressed trip string
+        $compressedTrip = '';
 
         // Process each event in the input JSON
         foreach ($events as $event) {
@@ -133,24 +133,24 @@ class PromptFormatService
             // Combine the extracted fields into a single line using '|' separator
             $compressedEvent = "[{$uuid}|{$title}|{$location}]";
 
-            // Add the compressed event line to the compressed itinerary string, followed by a newline character
-            $compressedItinerary .= $compressedEvent . "\n";
+            // Add the compressed event line to the compressed trip string, followed by a newline character
+            $compressedTrip .= $compressedEvent . "\n";
         }
 
-        return $compressedItinerary;
+        return $compressedTrip;
     }
 
     public function compressEvent($event)
     {
-        // Initialize an empty compressed itinerary string
-        $compressedItinerary = '';
+        // Initialize an empty compressed trip string
+        $compressedTrip = '';
 
         $uuid = $event->uuid;
         $title = $event->title;
         $description = $event->description;
         $location = $event->location->name;
 
-        $compressedItinerary = "[e|{$uuid}|{$title}|{$description}|{$location}]";
+        $compressedTrip = "[e|{$uuid}|{$title}|{$description}|{$location}]";
 
         foreach ($event->activities as $activity) {
             $title = $activity->title;
@@ -159,11 +159,11 @@ class PromptFormatService
             // Combine the extracted fields into a single line using '|' separator
             $compressedActivity = "[a|{$title}|{$description}]";
 
-            // Add the compressed event line to the compressed itinerary string, followed by a newline character
-            $compressedItinerary .= $compressedActivity . "\n";
+            // Add the compressed event line to the compressed trip string, followed by a newline character
+            $compressedTrip .= $compressedActivity . "\n";
         }
 
-        return $compressedItinerary;
+        return $compressedTrip;
     }
 
     public function extractEventDetails($response)

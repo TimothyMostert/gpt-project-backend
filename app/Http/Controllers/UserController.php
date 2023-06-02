@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Hash;
 use App\Repository\UserRepository;
 
 class UserController extends Controller
@@ -70,5 +68,16 @@ class UserController extends Controller
             'success' => true,
             'message' => 'User successfully deleted!'
         ], 200);
+    }
+
+    public function getUserTrips()
+    {
+        $user = $this->userRepo->currentAuthenticatedUser();
+        $trips = $this->userRepo->getTrips();
+        return response()->json([
+            'success' => true,
+            'message' => 'Trips recieved',
+            'trips' => $trips
+        ]);
     }
 }
