@@ -19,6 +19,11 @@ class Location extends Model
         'state',
         'country',
         'type',
+        'photo_references'
+    ];
+
+    protected $casts = [
+        'photo_references' => 'array',
     ];
 
     protected $hidden = [

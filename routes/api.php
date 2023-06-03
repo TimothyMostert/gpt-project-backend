@@ -29,6 +29,7 @@ Route::get('user/auth', [LoginController::class, 'authenticateUserFromToken']);
 Route::get('user/trips', [UserController::class, 'getUserTrips']);
 
 Route::post('trip/create', [TripController::class, 'createEventsTrip']);
+Route::get('trip/delete/{id}', [TripController::class, 'deleteTrip']);
 
 Route::post('event/details', [TripController::class, 'createEventDetails']);
 Route::post('event/edit', [TripController::class, 'editEvent']);

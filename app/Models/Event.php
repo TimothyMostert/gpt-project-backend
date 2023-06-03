@@ -18,7 +18,7 @@ class Event extends Model
         'title',
         'description',
         'trip_id',
-        'location_id'
+        'location_id',
     ];
 
     protected $casts = [

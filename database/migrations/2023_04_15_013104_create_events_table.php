@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('event_type')->nullable();
             $table->unsignedBigInteger('trip_id')->nullable();
-            $table->foreign('trip_id')->references('id')->on('trips');
+            $table->foreign('trip_id')->references('id')->on('trips')->onDelete('cascade');;
             $table->unsignedBigInteger('location_id')->nullable();
             $table->foreign('location_id')->references('id')->on('locations');
             $table->string('title')->nullable();

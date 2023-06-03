@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('state')->nullable();
             $table->string('country')->nullable();
             $table->string('type')->nullable();
+            $table->json('photo_references')->nullable();
             $table->timestamps();
         });
     }

@@ -355,15 +355,10 @@ class TripController extends Controller
         ]);
     }
 
-    public function createRandomPrompt()
-    {
-        $prompts = config('prompts.random_trip_concepts');
-
-        $randomPrompt = $prompts[array_rand($prompts)];
-
+    public function deleteTrip($id) {
+        $trip = Trip::find($id);
+        $trip->delete();
         return response()->json([
-            'prompt' => $randomPrompt['prompt'],
-            'tags' => $randomPrompt['tags'],
             'success' => true
         ]);
     }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Location;
 use App\Services\GooglePlacesAPIService;
 
 class GoogleAPIController extends Controller
@@ -16,7 +17,6 @@ class GoogleAPIController extends Controller
 
     public function getPhotosFromLocation(Request $request)
     {
-        // validate
         $request->validate([
             'location' => 'required|string'
         ]);
@@ -25,8 +25,20 @@ class GoogleAPIController extends Controller
 
         $photoReferences = $this->places->photoReferences($locationString);
 
+        $location = Location::where('name', $locationString)->first();
+
+        if ($location) {
+            $location->photo_references = $photoReferences;
+            $location->save();
+        } else {
+            $location = Location::create([
+                'name' => $locationString,
+                'photo_references' => $photoReferences
+            ]);
+        }
+
         return response()->json([
-            'photoReferences' => $photoReferences
+            'location' => $location
         ]);
     }
 
