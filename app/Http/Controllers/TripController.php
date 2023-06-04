@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 use App\Services\OpenaiAPIService;
+use App\Services\GooglePlacesAPIService;
 use App\Services\PromptFormatService;
 
 use App\Models\Trip;
@@ -20,11 +22,13 @@ class TripController extends Controller
 {
     private $openaiAPIService;
     private $promptFormatService;
+    private $googleApiService;  
 
     public function __construct()
     {
         $this->openaiAPIService = new OpenaiAPIService();
         $this->promptFormatService = new PromptFormatService();
+        $this->googleApiService = new GooglePlacesAPIService();
     }
 
     public function createEventsTrip(Request $request)
@@ -65,9 +69,9 @@ class TripController extends Controller
         }
 
         // create trip title
-        $formattedPrompt = "Create a short trip title from the following prompt: '" . $request->prompt . "' only a couple of words long.";
-        $title = $this->openaiAPIService->basicPrompt($formattedPrompt, 20, 'text-babbage-001')['choices'][0]['text'];
-        $title = trim(preg_replace('/\s\s+/', ' ', $title));
+        $context = $this->promptFormatService->createTitleContext($request->prompt);
+        $rawTitle = $this->openaiAPIService->contextualPrompt($context, 100, 'gpt-3.5-turbo', 0);
+        $title = trim(preg_replace('/\s\s+/', ' ', $rawTitle->choices[0]->message->content));
 
         // create prompt context
         $context = $this->promptFormatService->createEventsContext($request->prompt, $request->interests, $promptContext);
@@ -100,9 +104,23 @@ class TripController extends Controller
         // create events
         $eventModels = [];
         foreach ($events as $key => $event) {
+
             $location = Location::firstOrCreate([
                 'name' => $event['location'] ?? 'Location not specified',
             ]);
+
+            // if location does not have reference_photos yet, fetch them from Google Places API
+            if (!$location->photo_references) {
+                $placeDetails = $this->googleApiService->placeDetailsForPhotosAndGeometry($location->name);
+                // if place details are not an error, save them to the location
+                if (!isset($placeDetails['error'])) {
+                    $location->photo_references = $placeDetails['photoReferences'];
+                    $location->latitude = $placeDetails['geometry']['lat'] ?? "";
+                    $location->longitude = $placeDetails['geometry']['lng'] ?? "";
+                    $location->save();
+                }
+            }
+
             $eventModel = Event::create([
                 'trip_id' => $trip->id,
                 'event_type' => 'location',
@@ -117,9 +135,24 @@ class TripController extends Controller
         // link events to trip
         $trip->events()->saveMany($eventModels);
 
+        // get a photo from the events and set it as the trip photo
+        // if neccessary keep searching events until a photo is found
+        $tripPhoto = null;
+        foreach ($eventModels as $event) {
+            if ($event->location->photo_references) {
+                $tripPhoto = $event->location->photo_references[0];
+                break;
+            }
+        }
+        if ($tripPhoto) {
+            $trip->main_photo = $tripPhoto;
+            $trip->save();
+        } else {
+            Log::info('No main photo found for trip: ' . $trip->id);
+        }
+
         return response()->json([
-            'title' => $title,
-            'trip' => $trip->load(['events', 'events.location']),
+            'trip' => $trip->load(['events', 'events.location',]),
             'success' => true
         ]);
     }
@@ -359,6 +392,35 @@ class TripController extends Controller
         $trip = Trip::find($id);
         $trip->delete();
         return response()->json([
+            'success' => true
+        ]);
+    }
+
+    public function getTrip($id) {
+        $trip = Trip::with(['events', 'events.location', 'events.activities', 'user'])->find($id);
+        return response()->json([
+            'trip' => $trip,
+            'success' => true
+        ]);
+    }
+
+    public function searchTrips(Request $request) {
+        // possible search params
+        $perPage = $request->perPage ?? 10;
+        $search = $request->search ?? "";
+        $order = $request->order ?? 'desc';
+        $sort = $request->sort ?? 'created_at';
+        $page = $request->page ?? 1;
+
+        // get trips
+        $trips = Trip::with(['events', 'events.location', 'events.activities', 'user'])
+            ->where('title', 'LIKE', "%{$search}%")
+            // ->orWhere('description', 'LIKE', "%{$search}%")
+            ->orderBy($sort, $order)
+            ->simplePaginate($perPage, ['*'], 'page', $page);
+
+        return response()->json([
+            'trips' => $trips,
             'success' => true
         ]);
     }

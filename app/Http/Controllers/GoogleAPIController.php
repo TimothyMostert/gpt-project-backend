@@ -23,24 +23,35 @@ class GoogleAPIController extends Controller
 
         $locationString = $request->input('location');
 
-        $photoReferences = $this->places->photoReferences($locationString);
-
         $location = Location::where('name', $locationString)->first();
 
-        if ($location) {
-            $location->photo_references = $photoReferences;
-            $location->save();
-        } else {
-            $location = Location::create([
-                'name' => $locationString,
-                'photo_references' => $photoReferences
-            ]);
+        $wasUpdated = false;
+
+        // if the location doesnt have a photo reference, get one from google places api
+        if (!$location || !$location->photo_references) {
+            $placeDetails = $this->places->placeDetailsForPhotosAndGeometry($locationString);
+            // if not error
+            if (!isset($placeDetails['error'])) {
+                if ($location) {
+                    $location->photo_references = $placeDetails['photoReferences'];
+                    $location->latitude = $placeDetails['geometry']['lat'] ?? "";
+                    $location->longitude = $placeDetails['geometry']['lng'] ?? "";
+                    $location->save();
+                } else {
+                    $location = Location::create([
+                        'name' => $locationString,
+                        'latitude' => $placeDetails['geometry']['lat'] ?? "",
+                        'longitude' => $placeDetails['geometry']['lng'] ?? "",
+                        'photo_references' =>  $placeDetails['photoReferences']
+                    ]);
+                }
+                $wasUpdated = true;
+            }
         }
 
         return response()->json([
-            'location' => $location
+            'location' => $location,
+            'wasUpdated' => $wasUpdated
         ]);
     }
-
-
 }

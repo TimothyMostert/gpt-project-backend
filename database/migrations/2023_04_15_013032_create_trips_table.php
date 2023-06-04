@@ -16,6 +16,8 @@ return new class extends Migration
             $table->string('title');
             $table->foreignId('user_id')->constrained();
             $table->foreignId('prompt_id')->constrained();
+            $table->string('description')->nullable();
+            $table->string('main_photo')->nullable();
             $table->timestamps();
         });
     }

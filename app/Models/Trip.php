@@ -13,6 +13,8 @@ class Trip extends Model
         'user_id',
         'prompt_id',
         'title',
+        'description',
+        'main_photo',
     ];
 
     protected $hidden = [

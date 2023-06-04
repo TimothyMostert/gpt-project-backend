@@ -4,6 +4,19 @@ namespace App\Services;
 
 class PromptFormatService
 {
+
+    public function createTitleContext($prompt) 
+    {
+        $context = [
+            [
+                'content' => "Generate a short and captivating title for: $prompt",
+                'role' => 'system',
+            ],
+        ];
+
+        return $context;
+    }
+
     public function createEventsContext($prompt, $interests, $promptContext)
     {
         $context = $promptContext->context;

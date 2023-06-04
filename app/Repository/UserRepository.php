@@ -70,6 +70,6 @@ class UserRepository
 
     public function getTrips() {
         $user = $this->currentAuthenticatedUser();
-        return $user->trips()->get();
+        return $user->trips()->paginate(100);
     }
 }

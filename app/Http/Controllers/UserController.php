@@ -72,7 +72,6 @@ class UserController extends Controller
 
     public function getUserTrips()
     {
-        $user = $this->userRepo->currentAuthenticatedUser();
         $trips = $this->userRepo->getTrips();
         return response()->json([
             'success' => true,

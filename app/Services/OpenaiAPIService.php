@@ -20,6 +20,7 @@ class OpenaiAPIService
 
     public function contextualPrompt($context, $max_tokens = 2000, $model = 'gpt-3.5-turbo', $temperature = 0)
     {
+        error_log(json_encode($context));
         $result = OpenAI::chat()->create([
             'model' => $model,
             'messages' => $context,
