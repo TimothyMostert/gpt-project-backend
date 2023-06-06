@@ -19,7 +19,8 @@ class Location extends Model
         'state',
         'country',
         'type',
-        'photo_references'
+        'photo_references',
+        'place_id'
     ];
 
     protected $casts = [

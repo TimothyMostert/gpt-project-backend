@@ -8,11 +8,11 @@ use App\Services\GooglePlacesAPIService;
 
 class GoogleAPIController extends Controller
 {
-    private $places;
+    private $googleApiService;
 
     public function __construct()
     {
-        $this->places = new GooglePlacesAPIService();
+        $this->googleApiService = new GooglePlacesAPIService();
     }
 
     public function getPhotosFromLocation(Request $request)
@@ -29,7 +29,7 @@ class GoogleAPIController extends Controller
 
         // if the location doesnt have a photo reference, get one from google places api
         if (!$location || !$location->photo_references) {
-            $placeDetails = $this->places->placeDetailsForPhotosAndGeometry($locationString);
+            $placeDetails = $this->googleApiService->detailsFromLocation($locationString);
             // if not error
             if (!isset($placeDetails['error'])) {
                 if ($location) {
@@ -52,6 +52,70 @@ class GoogleAPIController extends Controller
         return response()->json([
             'location' => $location,
             'wasUpdated' => $wasUpdated
+        ]);
+    }
+
+    // 3 functions to test the new googleapiservice findPlaceFromText, getPlaceDetails, placeDetailsFromLocation
+    public function findPlaceFromText(Request $request)
+    {
+        $request->validate([
+            'location' => 'required',
+        ]);
+
+        $response = $this->googleApiService->findPlaceFromText($request['location']);
+
+        if (isset($response['error'])) {
+            return [
+                'error' => $response['error'],
+                'success' => false
+            ];
+        }
+
+        return response()->json([
+            'response' => $response,
+            'success' => true
+        ]);
+    }
+
+    public function getPlaceDetails(Request $request)
+    {
+        $request->validate([
+            'place_id' => 'required',
+        ]);
+
+        $response = $this->googleApiService->getPlaceDetails($request['place_id']);
+
+        if (isset($response['error'])) {
+            return [
+                'error' => $response['error'],
+                'success' => false
+            ];
+        }
+
+        return response()->json([
+            'response' => $response,
+            'success' => true
+        ]);
+    }
+
+    public function detailsFromLocation(Request $request)
+    {
+        $request->validate([
+            'location' => 'required',
+        ]);
+
+        $response = $this->googleApiService->detailsFromLocation($request['location']);
+
+        if (isset($response['error'])) {
+            return [
+                'error' => $response['error'],
+                'success' => false
+            ];
+        }
+
+        return response()->json([
+            'response' => $response,
+            'success' => true
         ]);
     }
 }

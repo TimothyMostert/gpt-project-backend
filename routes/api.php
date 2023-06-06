@@ -7,6 +7,7 @@ use App\Http\Controllers\TripController;
 use App\Http\Controllers\GoogleAPIController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\UnsplashController;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,6 +37,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('prompt/create', [TripController::class, 'createRandomPrompt']);
 });
 
+// Routes without sanctum guard
 Route::post('trip/search', [TripController::class, 'searchTrips']);
 Route::get('trip/{id}', [TripController::class, 'getTrip']);
-Route::post('google/places/photos', [GoogleAPIController::class, 'getPhotosFromLocation']);
+
+// Google routes
+Route::post('google/places/find', [GoogleAPIController::class, 'findPlaceFromText']);
+Route::post('google/places/details', [GoogleAPIController::class, 'getPlaceDetails']);
+Route::post('google/places/detailsFromLocation', [GoogleAPIController::class, 'detailsFromLocation']);
+
+// Unsplash routes
+Route::post('unsplash/photosFromLocation', [UnsplashController::class, 'photosFromLocation']);
+

@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use App\Services\OpenaiAPIService;
 use App\Services\GooglePlacesAPIService;
 use App\Services\PromptFormatService;
+use App\Services\UnsplashAPIService;
 
 use App\Models\Trip;
 use App\Models\Prompt;
@@ -23,12 +24,14 @@ class TripController extends Controller
     private $openaiAPIService;
     private $promptFormatService;
     private $googleApiService;  
+    private $unsplashAPIService;
 
     public function __construct()
     {
         $this->openaiAPIService = new OpenaiAPIService();
         $this->promptFormatService = new PromptFormatService();
         $this->googleApiService = new GooglePlacesAPIService();
+        $this->unsplashAPIService = new UnsplashAPIService();
     }
 
     public function createEventsTrip(Request $request)
@@ -109,14 +112,23 @@ class TripController extends Controller
                 'name' => $event['location'] ?? 'Location not specified',
             ]);
 
-            // if location does not have reference_photos yet, fetch them from Google Places API
-            if (!$location->photo_references) {
-                $placeDetails = $this->googleApiService->placeDetailsForPhotosAndGeometry($location->name);
+            // If using Google Places API, get place details
+            if (env('USE_GOOGLE_PLACES') && !$location->place_id) {
+                $place = $this->googleApiService->findPlaceFromText($location->name, 'place_id,geometry');
                 // if place details are not an error, save them to the location
-                if (!isset($placeDetails['error'])) {
-                    $location->photo_references = $placeDetails['photoReferences'];
-                    $location->latitude = $placeDetails['geometry']['lat'] ?? "";
-                    $location->longitude = $placeDetails['geometry']['lng'] ?? "";
+                if (!isset($place['error'])) {
+                    $location->place_id = $place['place_id'];
+                    $location->latitude = $place['geometry']['location']['lat'] ?? "";
+                    $location->longitude = $place['geometry']['location']['lng'] ?? "";
+                    $location->save();
+                }
+            }
+
+            // if no photo references, get a photo from unsplash
+            if (env('USE_UNSPLASH') && !$location->photo_references) {
+                $photos = $this->unsplashAPIService->searchPhotosByLocation($location->name);
+                if (!isset($photos['error'])) {
+                    $location->photo_references = $photos;
                     $location->save();
                 }
             }
@@ -129,6 +141,7 @@ class TripController extends Controller
                 'location_id' => $location->id,
                 'order' => $key,
             ]);
+            
             $eventModels[] = $eventModel;
         };
 
@@ -137,15 +150,16 @@ class TripController extends Controller
 
         // get a photo from the events and set it as the trip photo
         // if neccessary keep searching events until a photo is found
-        $tripPhoto = null;
+        $main_photo = null;
         foreach ($eventModels as $event) {
             if ($event->location->photo_references) {
-                $tripPhoto = $event->location->photo_references[0];
+                $main_photo = $event->location->photo_references[0];
                 break;
             }
         }
-        if ($tripPhoto) {
-            $trip->main_photo = $tripPhoto;
+
+        if ($main_photo) {
+            $trip->main_photo = $main_photo;
             $trip->save();
         } else {
             Log::info('No main photo found for trip: ' . $trip->id);

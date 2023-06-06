@@ -17,6 +17,10 @@ class Trip extends Model
         'main_photo',
     ];
 
+    protected $casts = [
+        'main_photo' => 'array',
+    ];
+
     protected $hidden = [
         'created_at',
         'updated_at',

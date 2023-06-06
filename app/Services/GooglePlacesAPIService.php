@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Log;
 
 class GooglePlacesAPIService
 {
-
     private $client;
     private $apiKey;
 
@@ -22,100 +21,103 @@ class GooglePlacesAPIService
         $this->apiKey = env('GOOGLE_PLACES_API_KEY');
     }
 
-    public function placeDetailsForPhotosAndGeometry($locationString, $count = 0)
+    private function handleRequestWithRetry($method, $endpoint, $query, $count = 0)
     {
-        $photoReferences = [];
-        $geometry = [];
-
         try {
-
-            $placeSearchResponse = $this->client->get('findplacefromtext/json', [
-                'query' => [
-                    'input' => $locationString,
-                    'inputtype' => 'textquery',
-                    'fields' => 'place_id',
-                    'key' => $this->apiKey
-                ]
-            ]);
-
-            if ($placeSearchResponse->getStatusCode() == 200) {
-                $places = json_decode($placeSearchResponse->getBody(), true);
-
-                // check if staatus not ok
-                if ($places['status'] != 'OK') {
-                    // check if "status":"ZERO_RESULTS"
-                    if ($places['status'] == 'ZERO_RESULTS') {
-                        Log::info('ZERO_RESULTS for ' . $locationString);
-                        return [
-                            'error' => 'ZERO_RESULTS'
-                        ];
-                    } else if ($places['status'] == 'OVER_QUERY_LIMIT') {
-                        Log::error('OVER_QUERY_LIMIT for ' . $locationString);
-                        return [
-                            'error' => 'OVER_QUERY_LIMIT'
-                        ];
-                    } else {
-                        Log::error('Error getting place id' . $placeSearchResponse->getStatusCode() . ' ' . $placeSearchResponse->getReasonPhrase());
-                        return [
-                            'error' => 'Error getting place id' . $placeSearchResponse->getStatusCode() . ' ' . $placeSearchResponse->getReasonPhrase()
-                        ];
-                    }
+            $response = $this->client->$method($endpoint, ['query' => $query]);
+        
+            if ($response->getStatusCode() == 200) {
+                $result = json_decode($response->getBody(), true);
+                if (isset($result['status']) && $result['status'] != 'OK') {
+                    Log::notice('Status not ok in API request to ' . $endpoint . '. Status: ' . $result['status']);
+                    return ['error' => $result['status']];
                 }
-
-
-
-                foreach ($places['candidates'] as $place) {
-                    $placeDetailsResponse = $this->client->get('details/json', [
-                        'query' => [
-                            'place_id' => $place['place_id'],
-                            'fields' => 'photo,geometry/location',
-                            'key' => $this->apiKey
-                        ]
-                    ]);
-
-                    if ($placeDetailsResponse->getStatusCode() == 200) {
-                        $placeDetails = json_decode($placeDetailsResponse->getBody(), true);
-
-                        Log::info(json_encode($placeDetails, true));
-
-                        $geometry = $placeDetails['result']['geometry']['location'];
-                        foreach ($placeDetails['result']['photos'] as $photo) {
-                            $photoReferences[] = $photo['photo_reference'];
-                        }
-                    } else {
-                        Log::error('Error getting place details' . $placeDetailsResponse->getStatusCode() . ' ' . $placeDetailsResponse->getReasonPhrase());
-                        return [
-                            'error' => 'Error getting place details' . $placeDetailsResponse->getStatusCode() . ' ' . $placeDetailsResponse->getReasonPhrase()
-                        ];
-                    }
-                }
+                Log::info('Successful API request to ' . $endpoint . ' with response: ' . json_encode($result));
+                return $result;
             } else {
-                Log::error('Error getting place id' . $placeSearchResponse->getStatusCode() . ' ' . $placeSearchResponse->getReasonPhrase());
-                return [
-                    'error' => 'Error getting place id' . $placeSearchResponse->getStatusCode() . ' ' . $placeSearchResponse->getReasonPhrase()
-                ];
+                Log::error('Error in API request to ' . $endpoint . '. Status code: ' . $response->getStatusCode());
+                return ['error' => $response->getStatusCode()];
             }
-        } catch (RequestException $e) {
-            Log::error('RequestException: ' . $e->getMessage());
-            // if cURL error 28 (timeout), retry but add count to prevent infinite loop
-            if ($e->getCode() == 28 && $count < 3) {
-                return $this->placeDetailsForPhotosAndGeometry($locationString, $count + 1);
+        } catch (\GuzzleHttp\Exception\ConnectException $e) {
+            Log::notice('Status not ok in API request to ' . $endpoint . ' (Attempt ' . ($count+1) . '): ' . $e->getMessage());
+        
+            if ($e->getHandlerContext()['errno'] == 28 && $count < 1) {
+                // Retry if cURL error 28 (timeout), but limit retries to prevent infinite loop
+                $count++;
+                Log::warning('Retrying API request to ' . $endpoint . ' due to cURL error 28. Attempt number: ' . ($count+1));
+                return $this->handleRequestWithRetry($method, $endpoint, $query, $count);
             } else {
-                return [
-                    'error' => 'RequestException: ' . $e->getMessage()
-                ];
+                return ['error' => $e->getMessage()];
             }
         } catch (\Exception $e) {
-            Log::error('Exception: ' . $e->getMessage());
-            // Handle other possible exceptions here...
-            return [
-                'error' => 'Exception: ' . $e->getMessage()
-            ];
+            Log::error('Exception on API request to ' . $endpoint . ': ' . $e->getMessage());
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    public function findPlaceFromText($locationString, $fields = 'place_id,photo,geometry/location')
+    {
+        $query = [
+            'input' => $locationString,
+            'inputtype' => 'textquery',
+            'fields' => $fields,
+            'key' => $this->apiKey
+        ];
+
+        $result = $this->handleRequestWithRetry('get', 'findplacefromtext/json', $query);
+
+        if (isset($result['error'])) {
+            Log::error('Error finding places from text: ' . $result['error']);
+            return ['error' => $result['error']];
+        }
+
+        return $result['candidates'];
+    }
+
+    public function getPlaceDetails($placeId, $fields = 'photo')
+    {
+        $query = [
+            'place_id' => $placeId,
+            'fields' => $fields,
+            'key' => $this->apiKey
+        ];
+
+        $result = $this->handleRequestWithRetry('get', 'details/json', $query);
+
+        if (isset($result['error'])) {
+            Log::error('Error getting place details: ' . $result['error']);
+            return ['error' => $result['error']];
+        }
+
+        return $result['result'];
+    }
+
+    public function detailsFromLocation($locationString, $fields = 'photo,geometry/location')
+    {
+        $details = [];
+
+        $places = $this->findPlaceFromText($locationString);
+
+        if (isset($places['error'])) {
+            Log::error('Error finding places from text: ' . $places['error']);
+            return ['error' => $places['error']];
+        }
+
+        foreach ($places as $place) {
+            $placeDetails = $this->getPlaceDetails($place['place_id'], $fields);
+
+            if (isset($placeDetails['error'])) {
+                Log::error('Error getting place details: ' . $placeDetails['error']);
+                return ['error' => $placeDetails['error']];
+            }
+
+            Log::info('Successful place details request: ' . json_encode($placeDetails));
+
+            $details[$place['place_id']] = $placeDetails;
         }
 
         return [
-            'photoReferences' => $photoReferences,
-            'geometry' => $geometry
+            'details' => $details,
         ];
     }
 }
