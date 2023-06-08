@@ -61,4 +61,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Trip::class)->with('events.location', 'events.activities');
     }
+
+    public function favoriteTrips()
+    {
+        return $this->belongsToMany(Trip::class);
+    }
 }

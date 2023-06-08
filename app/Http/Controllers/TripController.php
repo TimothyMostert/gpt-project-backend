@@ -94,7 +94,7 @@ class TripController extends Controller
         $trip = Trip::create([
             'user_id' => auth()->user()->id ?? 1,
             'prompt_id' => $prompt->id,
-            'title' => $title ?? 'Untitled Trip',
+            'title' => trim($title, '"') ?? 'Untitled Trip',
         ]);
 
         if (!$events) {
@@ -412,6 +412,20 @@ class TripController extends Controller
 
     public function getTrip($id) {
         $trip = Trip::with(['events', 'events.location', 'events.activities', 'user'])->find($id);
+
+        // check all the events location have photo_references and fetch them if not
+        if (env('USE_UNSPLASH'))  {
+            foreach ($trip->events as $event) {
+                if (!$event->location->photo_references) {
+                    $photos = $this->unsplashAPIService->searchPhotosByLocation($event->location->name);
+                    if (!isset($photos['error'])) {
+                        $event->location->photo_references = $photos;
+                        $event->location->save();
+                    }
+                }
+            } 
+        }
+
         return response()->json([
             'trip' => $trip,
             'success' => true

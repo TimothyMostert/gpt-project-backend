@@ -40,4 +40,9 @@ class Trip extends Model
     {
         return $this->hasMany(Event::class)->orderBy('order', 'asc');
     }
+
+    public function favoritedByUsers()
+    {
+        return $this->belongsToMany(User::class);
+    }
 }

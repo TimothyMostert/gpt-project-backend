@@ -79,4 +79,25 @@ class UserController extends Controller
             'trips' => $trips
         ]);
     }
+
+    public function addFavoriteTrip(Request $request, $id)
+{
+    $trip = Trip::find($id);
+    $request->auth()->user()->favoriteTrips()->syncWithoutDetaching($trip);
+    return response()->json([
+        'success' => true,
+        'message' => 'Trip added to favorites',
+        'trip' => $trip
+    ]);
+}
+
+public function removeFavoriteTrip(Request $request, $id)
+{
+    $trip = Trip::find($id);
+    $request->auth()->user()->favoriteTrips()->detach($trip);
+    return response()->json([
+        'success' => true,
+        'message' => 'Trip removed from favorites',
+        'trip' => $trip
+    ]);
 }

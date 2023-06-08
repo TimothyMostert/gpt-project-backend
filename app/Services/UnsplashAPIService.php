@@ -33,7 +33,6 @@ class UnsplashAPIService
 
             if ($response->getStatusCode() == 200) {
                 $result = json_decode($response->getBody(), true);
-                Log::info('Successful API request to ' . $endpoint . ' with response: ' . json_encode($result));
                 return $result;
             } else {
                 Log::error('Error in API request to ' . $endpoint . '. Status code: ' . $response->getStatusCode());
@@ -42,7 +41,7 @@ class UnsplashAPIService
         } catch (RequestException $e) {
             Log::notice('Connection exception in API request to ' . $endpoint . ' (Attempt ' . ($count+1) . '): ' . $e->getMessage());
 
-            if ($e->getHandlerContext()['errno'] == 28 && $count < 1) {
+            if ($e->getHandlerContext()['errno'] == 28 && $count < 3) {
                 // Retry if cURL error 28 (timeout), but limit retries to prevent infinite loop
                 $count++;
                 Log::warning('Retrying API request to ' . $endpoint . ' due to cURL error 28. Attempt number: ' . ($count+1));
