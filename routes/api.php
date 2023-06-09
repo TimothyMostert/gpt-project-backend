@@ -52,3 +52,6 @@ Route::post('google/places/detailsFromLocation', [GoogleAPIController::class, 'd
 
 // Unsplash routes
 Route::post('unsplash/photosFromLocation', [UnsplashController::class, 'photosFromLocation']);
+
+// map
+Route::get('map/{id}', [TripController::class, 'getMap']);

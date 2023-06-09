@@ -24,7 +24,7 @@ class TripController extends Controller
 {
     private $openaiAPIService;
     private $promptFormatService;
-    private $googleApiService;  
+    private $googleApiService;
     private $unsplashAPIService;
 
     public function __construct()
@@ -142,7 +142,7 @@ class TripController extends Controller
                 'location_id' => $location->id,
                 'order' => $key,
             ]);
-            
+
             $eventModels[] = $eventModel;
         };
 
@@ -363,7 +363,7 @@ class TripController extends Controller
         if (!$event) {
             return response()->json([
                 'success' => false,
-            'message' => 'Failed to add event. Please try again.'
+                'message' => 'Failed to add event. Please try again.'
             ]);
         }
 
@@ -383,7 +383,7 @@ class TripController extends Controller
         ]);
 
         // update the order of subsequent events
-        
+
 
         // create activities
         foreach ($event['activities'] as $activity) {
@@ -403,7 +403,8 @@ class TripController extends Controller
         ]);
     }
 
-    public function deleteTrip($id) {
+    public function deleteTrip($id)
+    {
         $trip = Trip::find($id);
         $trip->delete();
         return response()->json([
@@ -411,11 +412,12 @@ class TripController extends Controller
         ]);
     }
 
-    public function getTrip($id) {
+    public function getTrip($id)
+    {
         $trip = Trip::with(['events', 'events.location', 'events.activities', 'user', 'favoritedByUsers', 'ratings'])->find($id);
 
         // check all the events location have photo_references and fetch them if not
-        if (env('USE_UNSPLASH'))  {
+        if (env('USE_UNSPLASH')) {
             foreach ($trip->events as $event) {
                 if (!$event->location->photo_references) {
                     $photos = $this->unsplashAPIService->searchPhotosByLocation($event->location->name);
@@ -424,26 +426,17 @@ class TripController extends Controller
                         $event->location->save();
                     }
                 }
-            } 
-        }
-
-        $userFavorite = false;
-        $userRating = null;
-        if (auth('sanctum')->check()) {
-            $userFavorite = $trip->favoritedByUsers->contains(auth('sanctum')->user()->id);
-            $rating = $trip->ratings->firstWhere('user_id', auth('sanctum')->user()->id);
-            $userRating = $rating ? $rating->value : null;
+            }
         }
 
         return response()->json([
             'trip' => $trip,
-            'userFavorite' => $userFavorite,
-            'userRating' => $userRating,
             'success' => true
         ]);
     }
 
-    public function searchTrips(Request $request) {
+    public function searchTrips(Request $request)
+    {
         // possible search params
         $perPage = $request->perPage ?? 10;
         $search = $request->search ?? "";
@@ -460,6 +453,51 @@ class TripController extends Controller
 
         return response()->json([
             'trips' => $trips,
+            'success' => true
+        ]);
+    }
+
+    public function getMap($id)
+    {
+        $trip = Trip::with(['events', 'events.location', 'events.activities'])->find($id);
+        $events = $trip->events;
+        
+        // Generate a marker for each event
+        $markers = [];
+        foreach ($events as $event) {
+            $location = $event->location;
+            // get the location coordinates
+            if (!$location->latitude || !$location->longitude) {
+                $place = $this->googleApiService->findPlaceFromText($location->name, 'place_id,geometry');
+                // if place details are not an error, save them to the location
+                error_log(json_encode($place));
+                if (!isset($place['error'])) {
+                    $location->place_id = $place['place_id'];
+                    $location->latitude = $place['geometry']['location']['lat'] ?? "";
+                    $location->longitude = $place['geometry']['location']['lng'] ?? "";
+                    $location->save();
+                };
+            }
+            $marker = 'pin-l(' . $location->longitude . ',' . $location->latitude . ')';
+            if (str_contains($marker, 'pin-l(,')) {
+                continue;
+            }
+            $markers[] = 'pin-l(' . $location->longitude . ',' . $location->latitude . ')';
+        }
+        if (count($markers) == 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No locations found for this trip.'
+            ]);
+        }
+
+        $markersString = implode(',', $markers);
+        
+        // The Mapbox static map URL
+        $mapUrl = 'https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/' . $markersString . '/auto/1200x1200?access_token=' . env('MAPBOX_ACCESS_TOKEN');
+
+        return response()->json([
+            'map' => $mapUrl,
             'success' => true
         ]);
     }
