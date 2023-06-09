@@ -469,8 +469,7 @@ class TripController extends Controller
             // get the location coordinates
             if (!$location->latitude || !$location->longitude) {
                 $place = $this->googleApiService->findPlaceFromText($location->name, 'place_id,geometry');
-                // if place details are not an error, save them to the location
-                error_log(json_encode($place[0]));
+                // if place details are not an error, and the place array is long enough save them to the location
                 if (!isset($place[0]['error'])) {
                     $location->place_id = $place[0]['place_id'];
                     $location->latitude = $place[0]['geometry']['location']['lat'] ?? "";
