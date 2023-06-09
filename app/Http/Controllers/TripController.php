@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 use App\Services\OpenaiAPIService;
 use App\Services\GooglePlacesAPIService;
@@ -411,7 +412,7 @@ class TripController extends Controller
     }
 
     public function getTrip($id) {
-        $trip = Trip::with(['events', 'events.location', 'events.activities', 'user'])->find($id);
+        $trip = Trip::with(['events', 'events.location', 'events.activities', 'user', 'favoritedByUsers', 'ratings'])->find($id);
 
         // check all the events location have photo_references and fetch them if not
         if (env('USE_UNSPLASH'))  {
@@ -426,8 +427,18 @@ class TripController extends Controller
             } 
         }
 
+        $userFavorite = false;
+        $userRating = null;
+        if (auth('sanctum')->check()) {
+            $userFavorite = $trip->favoritedByUsers->contains(auth('sanctum')->user()->id);
+            $rating = $trip->ratings->firstWhere('user_id', auth('sanctum')->user()->id);
+            $userRating = $rating ? $rating->value : null;
+        }
+
         return response()->json([
             'trip' => $trip,
+            'userFavorite' => $userFavorite,
+            'userRating' => $userRating,
             'success' => true
         ]);
     }

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Repository\UserRepository;
+use App\Models\Trip;
+use App\Models\Rating;
 
 class UserController extends Controller
 {
@@ -80,10 +82,11 @@ class UserController extends Controller
         ]);
     }
 
-    public function addFavoriteTrip(Request $request, $id)
+    public function addFavoriteTrip($id)
 {
     $trip = Trip::find($id);
-    $request->auth()->user()->favoriteTrips()->syncWithoutDetaching($trip);
+    $user = $this->userRepo->currentAuthenticatedUser();
+    $user->favoriteTrips()->syncWithoutDetaching($trip);
     return response()->json([
         'success' => true,
         'message' => 'Trip added to favorites',
@@ -91,13 +94,58 @@ class UserController extends Controller
     ]);
 }
 
-public function removeFavoriteTrip(Request $request, $id)
+public function removeFavoriteTrip($id)
 {
     $trip = Trip::find($id);
-    $request->auth()->user()->favoriteTrips()->detach($trip);
+    $user = $this->userRepo->currentAuthenticatedUser();
+    $user->favoriteTrips()->detach($trip);
     return response()->json([
         'success' => true,
         'message' => 'Trip removed from favorites',
         'trip' => $trip
     ]);
+}
+
+public function storeRating(Request $request)
+{
+    $request->validate([
+        'value' => 'required',
+        'trip_id' => 'required|exists:trips,id'
+    ]);
+
+    $trip = Trip::find($request['trip_id']);
+    $rating = new Rating;
+    $rating->value = $request['value'];
+    $rating->user()->associate($request->user());
+    $trip->ratings()->save($rating);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Rating successfully added',
+        'rating' => $rating
+    ], 201);
+}
+
+public function updateRating(Request $request)
+{
+    $request->validate([
+        'value' => 'required',
+        'trip_id' => 'required|exists:trips,id'
+    ]);
+
+    // get rating from trip id and user id
+    $rating = $request->user()->ratings()->where('trip_id', $request['trip_id'])->first();
+
+    $this->authorize('update', $rating);
+    $trip = Trip::find($request['trip_id']);
+    $rating = $trip->ratings()->where('user_id', $request->user()->id)->first();
+    $rating->value = $request['value'];
+    $rating->save();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Rating successfully updated',
+        'rating' => $rating
+    ], 200);
+}
 }

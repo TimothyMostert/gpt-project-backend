@@ -45,4 +45,9 @@ class Trip extends Model
     {
         return $this->belongsToMany(User::class);
     }
+
+    public function ratings()
+    {
+        return $this->hasMany(Rating::class);
+    }
 }

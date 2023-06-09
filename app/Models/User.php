@@ -66,4 +66,9 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Trip::class);
     }
+
+    public function ratings()
+{
+    return $this->hasMany(Rating::class);
+}
 }

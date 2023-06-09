@@ -35,6 +35,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('event/edit', [TripController::class, 'editEvent']);
     Route::post('event/add', [TripController::class, 'addEvent']);
     Route::get('prompt/create', [TripController::class, 'createRandomPrompt']);
+    Route::get('/trip/favorite/{id}', [UserController::class, 'addFavoriteTrip']);
+    Route::delete('/trip/unfavorite/{id}', [UserController::class, 'removeFavoriteTrip']);
+    Route::post('/trip/rating', [UserController::class, 'storeRating']);
+Route::patch('/trip/rating', [UserController::class, 'updateRating']);
 });
 
 // Routes without sanctum guard
@@ -48,4 +52,3 @@ Route::post('google/places/detailsFromLocation', [GoogleAPIController::class, 'd
 
 // Unsplash routes
 Route::post('unsplash/photosFromLocation', [UnsplashController::class, 'photosFromLocation']);
-
