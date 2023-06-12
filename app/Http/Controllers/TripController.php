@@ -154,7 +154,8 @@ class TripController extends Controller
         $main_photo = null;
         foreach ($eventModels as $event) {
             if ($event->location->photo_references) {
-                $main_photo = $event->location->photo_references[0];
+                // get random photo from location
+                $main_photo = $event->location->photo_references[array_rand($event->location->photo_references)];
                 break;
             }
         }
