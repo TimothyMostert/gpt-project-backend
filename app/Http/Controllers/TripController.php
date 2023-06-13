@@ -296,6 +296,15 @@ class TripController extends Controller
         ]);
         $eventModel->location_id = $location->id;
 
+        // if no photo references, get a photo from unsplash
+        if (env('USE_UNSPLASH') && !$location->photo_references) {
+            $photos = $this->unsplashAPIService->searchPhotosByLocation($location->name);
+            if (!isset($photos['error'])) {
+                $location->photo_references = $photos;
+                $location->save();
+            }
+        }
+
         // update activities
         $eventModel->activities()->delete();
         foreach ($event['activities'] as $activity) {
@@ -330,6 +339,14 @@ class TripController extends Controller
 
         // get trip
         $trip = Trip::with(['events', 'events.location', 'events.activities'])->find($request->trip_id);
+
+        // update the order of subsequent events
+        foreach ($trip->events as $tripEvent) {
+            if ($tripEvent->order >= $request->order) {
+                $tripEvent->order += 1;
+                $tripEvent->save();
+            }
+        }
 
         // get prompt context
         $promptContext = PromptContext::where('name', $request->prompt_context)->first();
@@ -372,6 +389,15 @@ class TripController extends Controller
             'name' => $event['event']['location'] ?? 'Location not specified',
         ]);
 
+        // if no photo references, get a photo from unsplash
+        if (env('USE_UNSPLASH') && !$location->photo_references) {
+            $photos = $this->unsplashAPIService->searchPhotosByLocation($location->name);
+            if (!isset($photos['error'])) {
+                $location->photo_references = $photos;
+                $location->save();
+            }
+        }
+
         // create event
         $eventModel = Event::create([
             'description' => $event['event']['description'],
@@ -382,9 +408,6 @@ class TripController extends Controller
             'location_id' => $location->id,
             'order' => $request->order,
         ]);
-
-        // update the order of subsequent events
-
 
         // create activities
         foreach ($event['activities'] as $activity) {
