@@ -40,6 +40,14 @@ class UserController extends Controller
             $request['password']
         );
 
+        // if user is not created
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sorry, user could not be created'
+            ], 500);
+        }
+
         return response()->json([
             'success' => true,
             'user' => $user,

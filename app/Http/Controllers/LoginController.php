@@ -23,7 +23,7 @@ class LoginController extends Controller
     }
 
     public function authenticateUserFromToken(Request $request) {
-        // check if the token is valid
+        // check if the token is valid otherwise return error
         $token = $request->bearerToken();
         if (!$token) {
             return new JsonResponse([
@@ -31,7 +31,13 @@ class LoginController extends Controller
             ], Response::HTTP_BAD_REQUEST);
         }
         $user = $request->user();
+        if (!$user) {
+            return new JsonResponse([
+                'error' => 'User not found.'
+            ], Response::HTTP_BAD_REQUEST);
+        }
         return response()->json([
+            'success' => true,
             'user' => $user
         ]);
     }
