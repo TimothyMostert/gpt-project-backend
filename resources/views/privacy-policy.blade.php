@@ -56,4 +56,5 @@
     <h4>How to Contact the Appropriate Authorities</h4>
     <p>Should you wish to report a complaint or if you feel that {{ config('app.name') }} has not addressed your concern in a satisfactory manner, you may contact the Information Commissioner's Office.</p>
 </div>
+
 @endsection
