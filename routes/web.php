@@ -20,6 +20,10 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/privacy-policy', function () {
+    return view('privacy-policy');
+});
+
 Route::post('user/register', [UserController::class, 'registerUserWithPassword']);
 
 Route::post('login/auth/password', [LoginController::class, 'loginWithPassword']);

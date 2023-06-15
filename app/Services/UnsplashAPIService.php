@@ -83,7 +83,7 @@ class UnsplashAPIService
                 'regular_url' => $photo['urls']['regular'],
                 'full_url' => $photo['urls']['full'],
                 'name' => $photo['user']['name'],
-                'portfolio_url' => $photo['user']['portfolio_url'],
+                'portfolio_url' => $photo['user']['links']['html'],
             ];
         }, $result);
 
