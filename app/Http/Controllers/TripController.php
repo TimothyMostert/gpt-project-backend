@@ -464,16 +464,28 @@ class TripController extends Controller
         // possible search params
         $perPage = $request->perPage ?? 10;
         $search = $request->search ?? "";
-        $order = $request->order ?? 'desc';
         $sort = $request->sort ?? 'created_at';
         $page = $request->page ?? 1;
+        $tags = $request->tags ?? [];
 
         // get trips
-        $trips = Trip::with(['events', 'events.location', 'events.activities', 'user'])
-            ->where('title', 'LIKE', "%{$search}%")
-            // ->orWhere('description', 'LIKE', "%{$search}%")
-            ->orderBy($sort, $order)
-            ->simplePaginate($perPage, ['*'], 'page', $page);
+        $trips = Trip::with(['events', 'events.location', 'events.activities', 'user', 'prompt.travelTags'])
+        ->where(function ($query) use ($search) {
+            $query->where('title', 'LIKE', "%{$search}%")
+                  ->orWhereHas('events.location', function ($query) use ($search) {
+                      $query->where('name', 'LIKE', "%{$search}%");
+                  });
+        });
+
+        // if tags are provided
+        if (!empty($tags)) {
+            $trips = $trips->whereHas('prompt.travelTags', function ($query) use ($tags) {
+                $query->whereIn('name', $tags);
+            });
+        }
+
+        $trips = $trips->orderBy($sort, 'desc')->simplePaginate($perPage, ['*'], 'page', $page);
+
 
         return response()->json([
             'trips' => $trips,
@@ -485,7 +497,7 @@ class TripController extends Controller
     {
         $trip = Trip::with(['events', 'events.location', 'events.activities'])->find($id);
         $events = $trip->events;
-        
+
         // Generate a marker for each event
         $markers = [];
         foreach ($events as $event) {
@@ -516,7 +528,7 @@ class TripController extends Controller
         }
 
         $markersString = implode(',', $markers);
-        
+
         // The Mapbox static map URL
         $mapUrl = 'https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/' . $markersString . '/auto/1200x1200?access_token=' . env('MAPBOX_ACCESS_TOKEN');
 
